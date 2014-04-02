@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="GLSL">
+      <UniqueIdentifier>{14cc05da-64ef-4f1b-a451-c54848076b50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene Files">
+      <UniqueIdentifier>{c9dcdfe3-1a65-42c3-a1af-02137b6c603e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Config Files">
+      <UniqueIdentifier>{85f716f3-f36d-47fa-ac1f-907b2f26f3e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\framework">
+      <UniqueIdentifier>{72d12d37-9dbc-47a3-a71c-b820225f94e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\simulation">
+      <UniqueIdentifier>{15e06f8e-7a26-41d0-a89d-db1d619bf1a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shared_headers">
+      <UniqueIdentifier>{9c0ce90f-2836-428f-9357-26a090c28fb6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\framework\image_writer">
+      <UniqueIdentifier>{75c901ee-8b5e-4b4f-9d8f-5fa001b90e79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\framework\fps_tracker">
+      <UniqueIdentifier>{35ff0770-4b2a-47ab-8240-e068fe7c97d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\framework\simple_timer">
+      <UniqueIdentifier>{a7a3ece8-a711-4697-a8cc-de2de34f0227}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\framework\glsl_wrapper">
+      <UniqueIdentifier>{b25621e9-c81f-4fe2-a07f-d7e09dc6a5d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\framework\camera">
+      <UniqueIdentifier>{77e4fea9-f07e-4519-af5b-54fc0c7e5963}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\objects">
+      <UniqueIdentifier>{05de225e-a1c9-4ac7-91c3-aea12d91b506}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\objects\primitives">
+      <UniqueIdentifier>{1dcb295a-07d3-4385-bc0f-4389f056a214}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\objects\scene">
+      <UniqueIdentifier>{91cdb059-ae90-46ae-acbc-a518324a4f57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\objects\mesh">
+      <UniqueIdentifier>{ad86a9be-8fa0-4b88-bd2f-6032c68162da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\simulation\constraints">
+      <UniqueIdentifier>{fb6caa09-8e77-4bdf-90da-e69b1ef96059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\simulation\simulation">
+      <UniqueIdentifier>{f79235fa-3725-4995-bfbf-07bab693123c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\objects\io">
+      <UniqueIdentifier>{af8a3591-28ff-4fbd-aed1-40e009ff1370}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\framework\ant_tweak_bar_wrapper">
+      <UniqueIdentifier>{0c09f386-99ba-4ca0-bdf0-b2f82a28d29e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\frag.glsl">
+      <Filter>GLSL</Filter>
+    </None>
+    <None Include="shaders\vert.glsl">
+      <Filter>GLSL</Filter>
+    </None>
+    <None Include="scenes\test_scene.xml">
+      <Filter>Scene Files</Filter>
+    </None>
+    <None Include="config\config.txt">
+      <Filter>Config Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\fps.cpp">
+      <Filter>Source Files\framework\fps_tracker</Filter>
+    </ClCompile>
+    <ClCompile Include="source\stb_image.c">
+      <Filter>Source Files\framework\image_writer</Filter>
+    </ClCompile>
+    <ClCompile Include="source\stb_image_write.c">
+      <Filter>Source Files\framework\image_writer</Filter>
+    </ClCompile>
+    <ClCompile Include="source\glsl_wrapper.cpp">
+      <Filter>Source Files\framework\glsl_wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="source\camera.cpp">
+      <Filter>Source Files\framework\camera</Filter>
+    </ClCompile>
+    <ClCompile Include="source\math_headers.cpp">
+      <Filter>Source Files\shared_headers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\anttweakbar_wrapper.cpp">
+      <Filter>Source Files\framework\ant_tweak_bar_wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="source\primitive.cpp">
+      <Filter>Source Files\objects\primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="source\scene.cpp">
+      <Filter>Source Files\objects\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="source\mesh.cpp">
+      <Filter>Source Files\objects\mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="source\io_mesh.cpp">
+      <Filter>Source Files\objects\io</Filter>
+    </ClCompile>
+    <ClCompile Include="source\constraint.cpp">
+      <Filter>Source Files\simulation\constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="source\simulation.cpp">
+      <Filter>Source Files\simulation\simulation</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\clock.h">
+      <Filter>Source Files\framework\fps_tracker</Filter>
+    </ClInclude>
+    <ClInclude Include="source\fps.h">
+      <Filter>Source Files\framework\fps_tracker</Filter>
+    </ClInclude>
+    <ClInclude Include="source\timer.h">
+      <Filter>Source Files\framework\fps_tracker</Filter>
+    </ClInclude>
+    <ClInclude Include="source\stb_image.h">
+      <Filter>Source Files\framework\image_writer</Filter>
+    </ClInclude>
+    <ClInclude Include="source\stb_image_write.h">
+      <Filter>Source Files\framework\image_writer</Filter>
+    </ClInclude>
+    <ClInclude Include="source\glsl_wrapper.h">
+      <Filter>Source Files\framework\glsl_wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="source\camera.h">
+      <Filter>Source Files\framework\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="source\timer_wrapper.h">
+      <Filter>Source Files\framework\simple_timer</Filter>
+    </ClInclude>
+    <ClInclude Include="source\math_headers.h">
+      <Filter>Source Files\shared_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\opengl_headers.h">
+      <Filter>Source Files\shared_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\global_headers.h">
+      <Filter>Source Files\shared_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\anttweakbar_wrapper.h">
+      <Filter>Source Files\framework\ant_tweak_bar_wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="source\primitive.h">
+      <Filter>Source Files\objects\primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="source\scene.h">
+      <Filter>Source Files\objects\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="source\mesh.h">
+      <Filter>Source Files\objects\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="source\io_mesh.h">
+      <Filter>Source Files\objects\io</Filter>
+    </ClInclude>
+    <ClInclude Include="source\constraint.h">
+      <Filter>Source Files\simulation\constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="source\simulation.h">
+      <Filter>Source Files\simulation\simulation</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

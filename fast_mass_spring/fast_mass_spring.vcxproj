@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{AC8EBA1C-A396-4C4C-ADF8-1264CE5C3104}</ProjectGuid>
+    <RootNamespace>fast_mass_spring</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\external_dependencies\AntTweakBar\include;..\external_dependencies\freeglut\include;..\external_dependencies\Eigen;..\external_dependencies\glew\include;..\external_dependencies\glm;..\external_dependencies\matlab_engine\include;..\external_dependencies\TinyXML\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>../external_dependencies/AntTweakBar/lib;../external_dependencies/glew/lib;../external_dependencies/freeglut/lib/x64;../external_dependencies/TinyXML/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tinyxmld_STL.lib;freeglut.lib;glew32.lib;glew32mx.lib;glew32mxs.lib;glew32s.lib;glu32.lib;opengl32.lib;AntTweakBar64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../external_dependencies/AntTweakBar/include;../external_dependencies/Eigen;../external_dependencies/freeglut/include;../external_dependencies/glew/include;../external_dependencies/glm;../external_dependencies/TinyXML/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>../external_dependencies/AntTweakBar/lib;../external_dependencies/glew/lib;../external_dependencies/freeglut/lib/x64;../external_dependencies/TinyXML/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tinyxmld_STL.lib;glew32.lib;glu32.lib;opengl32.lib;freeglut.lib;AntTweakBar64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\external_dependencies\AntTweakBar\include;..\external_dependencies\freeglut\include;..\external_dependencies\Eigen;..\external_dependencies\glew\include;..\external_dependencies\glm;..\external_dependencies\matlab_engine\include;..\external_dependencies\TinyXML\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>../external_dependencies/AntTweakBar/lib;../external_dependencies/glew/lib;../external_dependencies/freeglut/lib/x64;../external_dependencies/TinyXML/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tinyxml_STL.lib;glew32.lib;glew32mx.lib;glu32.lib;opengl32.lib;freeglut.lib;AntTweakBar.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>../external_dependencies/AntTweakBar/include;../external_dependencies/Eigen;../external_dependencies/freeglut/include;../external_dependencies/glew/include;../external_dependencies/glm;../external_dependencies/TinyXML/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>../external_dependencies/AntTweakBar/lib;../external_dependencies/glew/lib;../external_dependencies/freeglut/lib/x64;../external_dependencies/TinyXML/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tinyxml_STL.lib;glew32.lib;glu32.lib;opengl32.lib;freeglut.lib;AntTweakBar64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="config\config.txt" />
+    <None Include="scenes\test_scene.xml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="shaders\frag.glsl" />
+    <None Include="shaders\vert.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\anttweakbar_wrapper.cpp" />
+    <ClCompile Include="source\camera.cpp" />
+    <ClCompile Include="source\constraint.cpp" />
+    <ClCompile Include="source\fps.cpp" />
+    <ClCompile Include="source\glsl_wrapper.cpp" />
+    <ClCompile Include="source\io_mesh.cpp" />
+    <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\math_headers.cpp" />
+    <ClCompile Include="source\mesh.cpp" />
+    <ClCompile Include="source\primitive.cpp" />
+    <ClCompile Include="source\scene.cpp" />
+    <ClCompile Include="source\simulation.cpp" />
+    <ClCompile Include="source\stb_image.c" />
+    <ClCompile Include="source\stb_image_write.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\anttweakbar_wrapper.h" />
+    <ClInclude Include="source\camera.h" />
+    <ClInclude Include="source\clock.h" />
+    <ClInclude Include="source\constraint.h" />
+    <ClInclude Include="source\global_headers.h" />
+    <ClInclude Include="source\fps.h" />
+    <ClInclude Include="source\glsl_wrapper.h" />
+    <ClInclude Include="source\io_mesh.h" />
+    <ClInclude Include="source\math_headers.h" />
+    <ClInclude Include="source\mesh.h" />
+    <ClInclude Include="source\opengl_headers.h" />
+    <ClInclude Include="source\primitive.h" />
+    <ClInclude Include="source\scene.h" />
+    <ClInclude Include="source\simulation.h" />
+    <ClInclude Include="source\stb_image.h" />
+    <ClInclude Include="source\stb_image_write.h" />
+    <ClInclude Include="source\timer.h" />
+    <ClInclude Include="source\timer_wrapper.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
