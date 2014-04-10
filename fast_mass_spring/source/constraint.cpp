@@ -88,7 +88,10 @@ AttachmentConstraint::~AttachmentConstraint()
 ScalarType AttachmentConstraint::EvaluatePotentialEnergy(const VectorX& x)
 {
 	// TODO
-	return 0.0;
+	ScalarType k = *m_stiffness;
+	EigenVector3 current_position = x.block_vector(m_p0);
+	ScalarType current_length = (current_position - m_fixd_point).norm();
+	return 0.5 * k * current_length * current_length;
 }
 
 // attachment spring gradient: k*(current_length)*current_direction
@@ -179,7 +182,12 @@ SpringConstraint::~SpringConstraint()
 ScalarType SpringConstraint::EvaluatePotentialEnergy(const VectorX& x)
 {
 	// TODO
-	return 0.0;
+	ScalarType k = *m_stiffness;
+	EigenVector3 current_position_p1 = x.block_vector(m_p1);
+	EigenVector3 current_position_p2 = x.block_vector(m_p2);
+	ScalarType current_length = (current_position_p1 - current_position_p2).norm();
+	ScalarType difference = current_length - m_rest_length;
+	return 0.5 * k * difference * difference;
 }
 
 // sping gradient: k*(current_length-rest_length)*current_direction;

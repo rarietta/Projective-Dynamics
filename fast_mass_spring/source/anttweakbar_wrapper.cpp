@@ -156,7 +156,7 @@ void AntTweakBarWrapper::Init()
 										{INTEGRATION_GRADIENT_DESCENT, "Gradient Descent"},
 										{INTEGRATION_NEWTON_DESCENT, "Newton"},
 										{INTEGRATION_LOCAL_GLOBAL, "Local Global"},
-										{INTEGRATION_NWETON_DESCENT_PCG, "Newton with PCG"}};
+										{INTEGRATION_NEWTON_DESCENT_PCG, "Newton with PCG"}};
 	TwType integrationStyle = TwDefineEnum("Integration Method", integrationStyleEV, INTEGRATION_TOTAL_NUM);
 	TwAddVarRW(m_sim_bar, "Method", integrationStyle, &g_simulation->m_integration_method, " group='Integration' ");
 	TwAddVarRW(m_sim_bar, "Iterations/Frame", TW_TYPE_INT32, &g_simulation->m_iterations_per_frame, " group='Integration' ");
@@ -260,7 +260,7 @@ int AntTweakBarWrapper::Update()
 		break;
 	case INTEGRATION_GRADIENT_DESCENT:
 	case INTEGRATION_NEWTON_DESCENT:
-	case INTEGRATION_NWETON_DESCENT_PCG:
+	case INTEGRATION_NEWTON_DESCENT_PCG:
 		TwDefine(" 'Simulation Settings'/'Iterations/Frame' visible=true");
 		TwDefine(" 'Simulation Settings'/'Line Search' visible=true");
 		TwDefine(" 'Simulation Settings'/'Local Global' visible=false");
