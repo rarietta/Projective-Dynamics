@@ -85,6 +85,56 @@ void Simulation::UpdateAnimation(const int fn)
 	}
 }
 
+VectorX
+Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
+{
+	VectorX p_j;
+
+	AttachmentConstraint* ac;
+	if (ac = dynamic_cast<AttachmentConstraint*>(c)) // is attachment constraint
+	{
+		EigenVector3 p0;
+		p0 = ac->GetFixedPoint();
+		p_j.resize(3);
+		p_j.block_vector(0) = p0;
+	}
+
+	SpringConstraint *sc;
+	if (sc = dynamic_cast<SpringConstraint*>(c)) // is spring constraint
+	{
+		EigenVector3 p1, p2;
+		ScalarType rest_length = sc->GetRestLength();
+		unsigned int m_p1 = sc->GetConstrainedVertexIndex1();
+		unsigned int m_p2 = sc->GetConstrainedVertexIndex2();
+		EigenVector3 current_position_p1 = q.block_vector(m_p1);
+		EigenVector3 current_position_p2 = q.block_vector(m_p2);
+		EigenVector3 current_vector = current_position_p1 - current_position_p2;
+		ScalarType current_length = current_vector.norm();
+		ScalarType diff = current_length - rest_length;
+		p1 = current_position_p1 - (diff/2.0) * current_vector;
+		p2 = current_position_p2 + (diff/2.0) * current_vector;
+
+		p_j.resize(6);
+		p_j.block_vector(0) = p1;
+		p_j.block_vector(1) = p2;
+	}
+	
+	TetConstraint *tc;
+	if (tc = dynamic_cast<TetConstraint*>(c)) // is tetrahedral constraint
+	{
+		//TODO: all of this
+	}
+
+	return p_j;
+}
+
+VectorX
+SolveLinearSystem(VectorX s_n, std::vector<VectorX> p_vec)
+{
+	VectorX q_n1;
+	return q_n1;
+}
+
 void Simulation::Update()
 {
 	// update inertia term
@@ -109,8 +159,27 @@ void Simulation::Update()
 	case INTEGRATION_NEWTON_DESCENT:
 	case INTEGRATION_NEWTON_DESCENT_PCG:
 	case INTEGRATION_LOCAL_GLOBAL:
-		//TODO
+		//TODO 
+		{
+		VectorX q_n = m_mesh->m_current_positions;
+		VectorX v_n = m_mesh->m_current_velocities;
+		VectorX s_n = q_n + m_h*v_n + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
+		
+		VectorX q_n1 = s_n;
+		for (int i = 0; i < m_iterations_per_frame; i++)
+		{
+			std::vector<VectorX> p_vec;
+			for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
+			{
+				Constraint* Cj = *c;
+				VectorX p_j = ProjectOnConstraintSet(Cj, q_n1);
+			}
+			//q_n1 = SolveLinearSystem(s_n, p_vec);
+		}
+		
+		VectorX v_n1 = (q_n1 - q_n)/m_h;
 		break;
+		}
 	case INTEGRATION_PBD:
 		//TODO
 		break;

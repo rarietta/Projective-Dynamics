@@ -116,6 +116,11 @@ protected:
 	EigenVector3 m_g1, m_g2;
 	// rest length
 	ScalarType m_rest_length;
+
+public:
+	inline ScalarType GetRestLength(void) { return m_rest_length; }
+	inline unsigned int GetConstrainedVertexIndex1(void) { return m_p1; }
+	inline unsigned int GetConstrainedVertexIndex2(void) { return m_p2; }
 };
 
 class TetConstraint : public Constraint
