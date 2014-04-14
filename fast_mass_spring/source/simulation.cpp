@@ -305,24 +305,24 @@ void Simulation::Update()
 			if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
 			{
 				w_i = ac->EvaluatePotentialEnergy(q_n);
-				//A_i = m_A_attachment;
-				//B_i = m_B_attachment;
+				A_i = m_A_attachment;
+				B_i = m_B_attachment;
 			}
 
 			SpringConstraint *sc;
 			if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
 			{
 				w_i = sc->EvaluatePotentialEnergy(q_n);
-				//A_i = m_A_spring;
-				//B_i = m_B_spring;
+				A_i = m_A_spring;
+				B_i = m_B_spring;
 			}
 	
 			TetConstraint *tc;
 			if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
 			{
 				w_i = tc->EvaluatePotentialEnergy(q_n);
-				//A_i = m_A_tet;
-				//B_i = m_B_tet;
+				A_i = m_A_tet;
+				B_i = m_B_tet;
 			}
 
 			Y += ( w_i * S_i.transpose() * A_i.transpose() * A_i * S_i);
