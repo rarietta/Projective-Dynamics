@@ -50,6 +50,7 @@ Simulation::Simulation()
 	att_triplets.push_back( SparseMatrixTriplet( 1, 1, av1 ) );
 	att_triplets.push_back( SparseMatrixTriplet( 2, 2, av1 ) );
 
+	m_A_attachment.resize(3,3);
 	m_A_attachment.setFromTriplets( att_triplets.begin(), att_triplets.end() );
 
 
@@ -77,6 +78,7 @@ Simulation::Simulation()
 	spr_triplets.push_back( SparseMatrixTriplet( 5, 4, sv2 ) );
 	spr_triplets.push_back( SparseMatrixTriplet( 5, 5, sv1 ) );
 
+	m_A_spring.resize(6,6);
 	m_A_spring.setFromTriplets( spr_triplets.begin(), spr_triplets.end() );
 
 
@@ -119,6 +121,7 @@ Simulation::Simulation()
 	tet_triplets.push_back( SparseMatrixTriplet( 11, 10, v2 ) );
 	tet_triplets.push_back( SparseMatrixTriplet( 11, 11, v1 ) );
 
+	m_A_tet.resize(12,12);
 	m_A_tet.setFromTriplets( tet_triplets.begin(), tet_triplets.end() );
 
 
@@ -126,8 +129,13 @@ Simulation::Simulation()
 	// setup B matrices for all constraint types
 	////////////////////////////////////////////////////
 
+	m_B_attachment.resize(3,3);
 	m_B_attachment = m_A_attachment;
+
+	m_B_spring.resize(6,6);
 	m_B_spring = m_A_spring;
+
+	m_B_tet.resize(12,12);
 	m_B_tet = m_A_tet;
 }
 
@@ -237,6 +245,7 @@ Simulation::CreateSMatrix(Constraint* c)
 		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+0, 1));
 		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+1, 1));
 		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+2, 1));
+		S.resize(3,m_mesh->m_vertices_number);
 	}
 
 	SpringConstraint *sc;
@@ -250,12 +259,14 @@ Simulation::CreateSMatrix(Constraint* c)
 		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+0, 1));
 		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+1, 1));
 		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+2, 1));
+		S.resize(6,m_mesh->m_vertices_number);
 	}
 	
 	TetConstraint *tc;
 	if (tc = dynamic_cast<TetConstraint*>(c)) // is tetrahedral constraint
 	{
 		//TODO: all of this
+		S.resize(12,m_mesh->m_vertices_number);
 	}
 
 	S.setFromTriplets(s_triplets.begin(), s_triplets.end());
@@ -291,7 +302,7 @@ void Simulation::Update()
 			
 		VectorX q_n = m_mesh->m_current_positions;
 		VectorX v_n = m_mesh->m_current_velocities;
-
+		
 		SparseMatrix Y;
 		Y = m_mesh->m_mass_matrix / (m_h * m_h);
 		for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
