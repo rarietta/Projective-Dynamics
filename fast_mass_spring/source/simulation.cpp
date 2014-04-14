@@ -129,10 +129,47 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 }
 
 VectorX
-SolveLinearSystem(VectorX s_n, std::vector<VectorX> p_vec)
+Simulation::SolveLinearSystem(VectorX s_n, std::vector<VectorX> p_vec)
 {
 	VectorX q_n1;
 	return q_n1;
+}
+
+SparseMatrix
+Simulation::CreateSMatrix(Constraint* c)
+{
+	SparseMatrix S;
+	std::vector<SparseMatrixTriplet> s_triplets;
+	AttachmentConstraint* ac;
+	if (ac = dynamic_cast<AttachmentConstraint*>(c)) // is attachment constraint
+	{
+		unsigned int m_p0 = ac->GetConstrainedVertexIndex();
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+2, 1));
+	}
+
+	SpringConstraint *sc;
+	if (sc = dynamic_cast<SpringConstraint*>(c)) // is spring constraint
+	{
+		unsigned int m_p1 = sc->GetConstrainedVertexIndex1();
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3+0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3+1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3+2, 1));
+		unsigned int m_p2 = sc->GetConstrainedVertexIndex2();
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+2, 1));
+	}
+	
+	TetConstraint *tc;
+	if (tc = dynamic_cast<TetConstraint*>(c)) // is tetrahedral constraint
+	{
+		//TODO: all of this
+	}
+
+	S.setFromTriplets(s_triplets.begin(), s_triplets.end());
+	return S;
 }
 
 void Simulation::Update()
@@ -174,7 +211,7 @@ void Simulation::Update()
 				Constraint* Cj = *c;
 				VectorX p_j = ProjectOnConstraintSet(Cj, q_n1);
 			}
-			//q_n1 = SolveLinearSystem(s_n, p_vec);
+			q_n1 = SolveLinearSystem(s_n, p_vec);
 		}
 		
 		VectorX v_n1 = (q_n1 - q_n)/m_h;
