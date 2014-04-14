@@ -149,6 +149,13 @@ protected:
 	ScalarType m_animation_swing_amp;
 	ScalarType m_animation_swing_dir[3];	
 
+	SparseMatrix m_A_attachment;
+	SparseMatrix m_A_spring;
+	SparseMatrix m_A_tet;
+	SparseMatrix m_B_attachment;
+	SparseMatrix m_B_spring;
+	SparseMatrix m_B_tet;
+
 private:
 
 	// main update sub-routines
