@@ -137,6 +137,8 @@ Simulation::Simulation()
 
 	m_B_tet.resize(12,12);
 	m_B_tet = m_A_tet;
+
+	m_integration_method = INTEGRATION_LOCAL_GLOBAL;
 }
 
 Simulation::~Simulation()
@@ -227,7 +229,7 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 }
 
 VectorX
-Simulation::SolveLinearSystem(VectorX s_n, std::vector<VectorX> p_vec)
+Simulation::SolveLinearSystem(VectorX s_n, std::vector<VectorX> p_vec, SparseMatrix Y)
 {
 	VectorX q_n1;
 	return q_n1;
@@ -242,36 +244,140 @@ Simulation::CreateSMatrix(Constraint* c)
 	if (ac = dynamic_cast<AttachmentConstraint*>(c)) // is attachment constraint
 	{
 		unsigned int m_p0 = ac->GetConstrainedVertexIndex();
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+0, 1));
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+1, 1));
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3+2, 1));
-		S.resize(3,m_mesh->m_vertices_number);
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3 + 0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(1, m_p0*3 + 1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(2, m_p0*3 + 2, 1));
+		S.resize(3, m_mesh->m_vertices_number*3);
 	}
 
 	SpringConstraint *sc;
 	if (sc = dynamic_cast<SpringConstraint*>(c)) // is spring constraint
 	{
 		unsigned int m_p1 = sc->GetConstrainedVertexIndex1();
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3+0, 1));
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3+1, 1));
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3+2, 1));
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3 + 0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(1, m_p1*3 + 1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(2, m_p1*3 + 2, 1));
 		unsigned int m_p2 = sc->GetConstrainedVertexIndex2();
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+0, 1));
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+1, 1));
-		s_triplets.push_back(SparseMatrixTriplet(0, m_p2*3+2, 1));
-		S.resize(6,m_mesh->m_vertices_number);
+		s_triplets.push_back(SparseMatrixTriplet(3, m_p2*3 + 0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(4, m_p2*3 + 1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(5, m_p2*3 + 2, 1));
+		S.resize(6, m_mesh->m_vertices_number*3);
 	}
 	
 	TetConstraint *tc;
 	if (tc = dynamic_cast<TetConstraint*>(c)) // is tetrahedral constraint
 	{
 		//TODO: all of this
-		S.resize(12,m_mesh->m_vertices_number);
+		S.resize(12,m_mesh->m_vertices_number*3);
 	}
 
 	S.setFromTriplets(s_triplets.begin(), s_triplets.end());
 	return S;
 }
+
+SparseMatrix
+Simulation::CreateLHSMatrix()
+{
+	SparseMatrix Y;
+	int count = 0;
+	Y = m_mesh->m_mass_matrix / (m_h * m_h);
+	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
+	{
+		ScalarType w_i;
+		SparseMatrix S_i;
+		SparseMatrix A_i;
+		SparseMatrix B_i;
+
+		AttachmentConstraint *ac;
+		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
+		{
+			w_i = ac->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			A_i = m_A_attachment;
+			B_i = m_B_attachment;
+		}
+
+		SpringConstraint *sc;
+		if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
+		{
+			w_i = sc->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			A_i = m_A_spring;
+			B_i = m_B_spring;
+		}
+	
+		TetConstraint *tc;
+		if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
+		{
+			w_i = tc->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			A_i = m_A_tet;
+			B_i = m_B_tet;
+		}
+
+		S_i = CreateSMatrix(*c);
+
+
+		SparseMatrix S_i_transpose = S_i.transpose();
+		SparseMatrix A_i_transpose = A_i.transpose();
+			
+		S_i_transpose.applyThisOnTheLeft(A_i_transpose);
+		A_i_transpose.applyThisOnTheLeft(A_i);
+		A_i.applyThisOnTheLeft(S_i);
+			
+		Y += ( w_i * S_i);
+	}
+	return Y;
+}
+/*
+SparseMatrix
+Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
+{
+	SparseMatrix M;
+	int count = 0;
+	M = m_mesh->m_mass_matrix / (m_h * m_h);
+	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
+	{
+		ScalarType w_i;
+		SparseMatrix S_i;
+		SparseMatrix A_i;
+		SparseMatrix B_i;
+
+		AttachmentConstraint *ac;
+		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
+		{
+			w_i = ac->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			A_i = m_A_attachment;
+			B_i = m_B_attachment;
+		}
+
+		SpringConstraint *sc;
+		if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
+		{
+			w_i = sc->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			A_i = m_A_spring;
+			B_i = m_B_spring;
+		}
+	
+		TetConstraint *tc;
+		if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
+		{
+			w_i = tc->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			A_i = m_A_tet;
+			B_i = m_B_tet;
+		}
+
+		S_i = CreateSMatrix(*c);
+
+
+		SparseMatrix S_i_transpose = S_i.transpose();
+		SparseMatrix A_i_transpose = A_i.transpose();
+			
+		S_i_transpose.applyThisOnTheLeft(A_i_transpose);
+		A_i_transpose.applyThisOnTheLeft(A_i);
+		A_i.applyThisOnTheLeft(S_i);
+			
+		M += ( w_i * S_i);
+	}
+	return M;
+}*/
 
 void Simulation::Update()
 {
@@ -282,6 +388,7 @@ void Simulation::Update()
 	calculateExternalForce();
 
 	// update cloth
+	m_integration_method = INTEGRATION_LOCAL_GLOBAL;
 	switch (m_integration_method)
 	{
 	case INTEGRATION_EXPLICIT_EULER:
@@ -297,48 +404,11 @@ void Simulation::Update()
 	case INTEGRATION_NEWTON_DESCENT:
 	case INTEGRATION_NEWTON_DESCENT_PCG:
 	case INTEGRATION_LOCAL_GLOBAL:
-		//TODO 
-		{
-			
+	//TODO 
+	{
+		SparseMatrix Y = CreateLHSMatrix();
 		VectorX q_n = m_mesh->m_current_positions;
 		VectorX v_n = m_mesh->m_current_velocities;
-		
-		SparseMatrix Y;
-		Y = m_mesh->m_mass_matrix / (m_h * m_h);
-		for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
-		{
-			ScalarType w_i;
-			SparseMatrix S_i;
-			SparseMatrix A_i;
-			SparseMatrix B_i;
-
-			AttachmentConstraint *ac;
-			if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
-			{
-				w_i = ac->EvaluatePotentialEnergy(q_n);
-				A_i = m_A_attachment;
-				B_i = m_B_attachment;
-			}
-
-			SpringConstraint *sc;
-			if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
-			{
-				w_i = sc->EvaluatePotentialEnergy(q_n);
-				A_i = m_A_spring;
-				B_i = m_B_spring;
-			}
-	
-			TetConstraint *tc;
-			if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
-			{
-				w_i = tc->EvaluatePotentialEnergy(q_n);
-				A_i = m_A_tet;
-				B_i = m_B_tet;
-			}
-
-			Y += ( w_i * S_i.transpose() * A_i.transpose() * A_i * S_i);
-		}
-
 		VectorX s_n = q_n + m_h*v_n + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
 		
 		VectorX q_n1 = s_n;
@@ -350,12 +420,16 @@ void Simulation::Update()
 				Constraint* Cj = *c;
 				VectorX p_j = ProjectOnConstraintSet(Cj, q_n1);
 			}
-			q_n1 = SolveLinearSystem(s_n, p_vec);
+			//q_n1 = SolveLinearSystem(s_n, p_vec,Y);
 		}
 		
 		VectorX v_n1 = (q_n1 - q_n)/m_h;
+		m_mesh->m_current_positions = q_n1;
+		m_mesh->m_current_velocities = v_n1;
+
 		break;
-		}
+	}
+
 	case INTEGRATION_PBD:
 		//TODO
 		break;

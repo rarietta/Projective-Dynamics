@@ -78,8 +78,10 @@ public:
 	void Update();
 	void DrawConstraints(const VBO& vbos);
 	VectorX ProjectOnConstraintSet(Constraint* c, VectorX q);
-	VectorX SolveLinearSystem(VectorX s_n, std::vector<VectorX> p_vec);
+	VectorX SolveLinearSystem(VectorX s_n, std::vector<VectorX> p_vec, SparseMatrix Y);
 	SparseMatrix CreateSMatrix(Constraint* c);
+	SparseMatrix CreateLHSMatrix(void);
+	SparseMatrix CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec);
 
 	// select/unselect/move/save/load attachment constratins
 	ScalarType TryToSelectAttachmentConstraint(const EigenVector3& p0, const EigenVector3& dir); // return ray_projection_plane_distance if hit; return -1 otherwise.
