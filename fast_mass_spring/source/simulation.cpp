@@ -229,7 +229,7 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 }
 
 VectorX
-Simulation::SolveLinearSystem(VectorX s_n, std::vector<VectorX> p_vec, SparseMatrix Y)
+Simulation::SolveLinearSystem(VectorX q_n, SparseMatrix A, VectorX b)
 {
 	VectorX q_n1;
 	return q_n1;
@@ -279,8 +279,8 @@ SparseMatrix
 Simulation::CreateLHSMatrix()
 {
 	SparseMatrix Y;
-	int count = 0;
 	Y = m_mesh->m_mass_matrix / (m_h * m_h);
+
 	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
 	{
 		ScalarType w_i;
@@ -326,19 +326,23 @@ Simulation::CreateLHSMatrix()
 	}
 	return Y;
 }
-/*
-SparseMatrix
+
+VectorX
 Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 {
-	SparseMatrix M;
-	int count = 0;
-	M = m_mesh->m_mass_matrix / (m_h * m_h);
+	VectorX s_local = s_n;
+	SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
+	coeff.applyThisOnTheLeft(s_local);
+	VectorX M = s_local;
+
+	int index = 0;
 	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
 	{
 		ScalarType w_i;
 		SparseMatrix S_i;
 		SparseMatrix A_i;
 		SparseMatrix B_i;
+		VectorX p_i_local = p_vec[index++];
 
 		AttachmentConstraint *ac;
 		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
@@ -365,19 +369,17 @@ Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 		}
 
 		S_i = CreateSMatrix(*c);
-
-
 		SparseMatrix S_i_transpose = S_i.transpose();
 		SparseMatrix A_i_transpose = A_i.transpose();
 			
 		S_i_transpose.applyThisOnTheLeft(A_i_transpose);
-		A_i_transpose.applyThisOnTheLeft(A_i);
-		A_i.applyThisOnTheLeft(S_i);
+		A_i_transpose.applyThisOnTheLeft(B_i);
+		B_i.applyThisOnTheLeft(p_i_local);
 			
-		M += ( w_i * S_i);
+		M += (w_i * p_i_local);
 	}
 	return M;
-}*/
+}
 
 void Simulation::Update()
 {
@@ -406,7 +408,7 @@ void Simulation::Update()
 	case INTEGRATION_LOCAL_GLOBAL:
 	//TODO 
 	{
-		SparseMatrix Y = CreateLHSMatrix();
+		SparseMatrix A = CreateLHSMatrix();
 		VectorX q_n = m_mesh->m_current_positions;
 		VectorX v_n = m_mesh->m_current_velocities;
 		VectorX s_n = q_n + m_h*v_n + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
@@ -419,8 +421,10 @@ void Simulation::Update()
 			{
 				Constraint* Cj = *c;
 				VectorX p_j = ProjectOnConstraintSet(Cj, q_n1);
+				p_vec.push_back(p_j);
 			}
-			//q_n1 = SolveLinearSystem(s_n, p_vec,Y);
+			VectorX b = CreateRHSMatrix(s_n, p_vec);
+			//q_n1 = SolveLinearSystem(q_n, A, b);
 		}
 		
 		VectorX v_n1 = (q_n1 - q_n)/m_h;
