@@ -78,7 +78,7 @@ public:
 	void Update();
 	void DrawConstraints(const VBO& vbos);
 	VectorX ProjectOnConstraintSet(Constraint* c, VectorX q);
-	VectorX SolveLinearSystem(VectorX q_n, SparseMatrix A, VectorX b);
+	VectorX SolveLinearSystem(SparseMatrix A, VectorX b);
 	SparseMatrix CreateSMatrix(Constraint* c);
 	SparseMatrix CreateLHSMatrix(void);
 	VectorX CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec);

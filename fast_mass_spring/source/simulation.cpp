@@ -229,9 +229,22 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 }
 
 VectorX
-Simulation::SolveLinearSystem(VectorX q_n, SparseMatrix A, VectorX b)
+Simulation::SolveLinearSystem( SparseMatrix A, VectorX b )
 {
 	VectorX q_n1;
+
+	Eigen::LLT<Matrix> llt;
+
+	//std::cout << "Here is the matrix A:\n" << A << std::endl;
+	//std::cout << "Here is the right hand side b:\n" << b << std::endl;
+	//std::cout << "Computing LLT decomposition..." << std::endl;
+
+	llt.compute( A );
+	
+	q_n1 = llt.solve( b );
+
+	//std::cout << "The solution is:\n" << q_n1 << std::endl;
+
 	return q_n1;
 }
 
@@ -424,7 +437,7 @@ void Simulation::Update()
 				p_vec.push_back(p_j);
 			}
 			VectorX b = CreateRHSMatrix(s_n, p_vec);
-			//q_n1 = SolveLinearSystem(q_n, A, b);
+			q_n1 = SolveLinearSystem(A, b);
 		}
 		
 		VectorX v_n1 = (q_n1 - q_n)/m_h;
