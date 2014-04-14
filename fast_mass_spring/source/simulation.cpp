@@ -38,7 +38,97 @@ TimerWrapper g_integration_timer;
 
 Simulation::Simulation()
 {
+	////////////////////////////////////////////////////
+	// setup A matricex for attachment constraint
+	////////////////////////////////////////////////////
 
+	std::vector<SparseMatrixTriplet> att_triplets;
+
+	float av1 = -1;
+
+	att_triplets.push_back( SparseMatrixTriplet( 0, 0, av1 ) );
+	att_triplets.push_back( SparseMatrixTriplet( 1, 1, av1 ) );
+	att_triplets.push_back( SparseMatrixTriplet( 2, 2, av1 ) );
+
+	m_A_attachment.setFromTriplets( att_triplets.begin(), att_triplets.end() );
+
+
+	////////////////////////////////////////////////////
+	// setup A matrix for spring constraint
+	////////////////////////////////////////////////////
+
+	std::vector<SparseMatrixTriplet> spr_triplets;
+
+	float sv1 = 0.5;
+	float sv2 = -0.5;
+
+	spr_triplets.push_back( SparseMatrixTriplet( 0, 0, sv1 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 0, 1, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 1, 0, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 1, 1, sv1 ) );
+
+	spr_triplets.push_back( SparseMatrixTriplet( 2, 2, sv1 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 2, 3, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 3, 2, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 3, 3, sv1 ) );
+
+	spr_triplets.push_back( SparseMatrixTriplet( 4, 4, sv1 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 4, 5, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 5, 4, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 5, 5, sv1 ) );
+
+	m_A_spring.setFromTriplets( spr_triplets.begin(), spr_triplets.end() );
+
+
+	////////////////////////////////////////////////////
+	// setup A matrix for tet constraint
+	////////////////////////////////////////////////////
+
+	std::vector<SparseMatrixTriplet> tet_triplets;
+
+	float v1 = 0.75;
+	float v2 = -0.25;
+
+	tet_triplets.push_back( SparseMatrixTriplet( 0, 0, v1 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 0, 1, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 1, 0, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 1, 1, v1 ) );
+
+	tet_triplets.push_back( SparseMatrixTriplet( 2, 2, v1 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 2, 3, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 3, 2, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 3, 3, v1 ) );
+
+	tet_triplets.push_back( SparseMatrixTriplet( 4, 4, v1 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 4, 5, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 5, 4, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 5, 5, v1 ) );
+
+	tet_triplets.push_back( SparseMatrixTriplet( 6, 6, v1 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 6, 7, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 7, 6, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 7, 7, v1 ) );
+
+	tet_triplets.push_back( SparseMatrixTriplet( 8, 8, v1 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 8, 9, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 9, 8, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 9, 9, v1 ) );
+
+	tet_triplets.push_back( SparseMatrixTriplet( 10, 10, v1 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 10, 11, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 11, 10, v2 ) );
+	tet_triplets.push_back( SparseMatrixTriplet( 11, 11, v1 ) );
+
+	m_A_tet.setFromTriplets( tet_triplets.begin(), tet_triplets.end() );
+
+
+	////////////////////////////////////////////////////
+	// setup B matrices for all constraint types
+	////////////////////////////////////////////////////
+
+	m_B_attachment = m_A_attachment;
+	m_B_spring = m_A_spring;
+	m_B_tet = m_A_tet;
 }
 
 Simulation::~Simulation()
