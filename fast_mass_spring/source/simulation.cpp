@@ -198,8 +198,46 @@ void Simulation::Update()
 	case INTEGRATION_LOCAL_GLOBAL:
 		//TODO 
 		{
+			
 		VectorX q_n = m_mesh->m_current_positions;
 		VectorX v_n = m_mesh->m_current_velocities;
+
+		SparseMatrix Y;
+		Y = m_mesh->m_mass_matrix / (m_h * m_h);
+		for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
+		{
+			ScalarType w_i;
+			SparseMatrix S_i;
+			SparseMatrix A_i;
+			SparseMatrix B_i;
+
+			AttachmentConstraint *ac;
+			if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
+			{
+				w_i = ac->EvaluatePotentialEnergy(q_n);
+				//A_i = m_A_attachment;
+				//B_i = m_B_attachment;
+			}
+
+			SpringConstraint *sc;
+			if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
+			{
+				w_i = sc->EvaluatePotentialEnergy(q_n);
+				//A_i = m_A_spring;
+				//B_i = m_B_spring;
+			}
+	
+			TetConstraint *tc;
+			if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
+			{
+				w_i = tc->EvaluatePotentialEnergy(q_n);
+				//A_i = m_A_tet;
+				//B_i = m_B_tet;
+			}
+
+			Y += ( w_i * S_i.transpose() * A_i.transpose() * A_i * S_i);
+		}
+
 		VectorX s_n = q_n + m_h*v_n + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
 		
 		VectorX q_n1 = s_n;
