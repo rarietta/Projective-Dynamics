@@ -91,39 +91,27 @@ Simulation::Simulation()
 
 	std::vector<SparseMatrixTriplet> tet_triplets;
 
-	float v1 = 0.75;
-	float v2 = -0.25;
+	float v1 =  (2.0f / 3.0f);
+	float v2 = -(1.0f / 3.0f);
 
-	tet_triplets.push_back( SparseMatrixTriplet( 0, 0, v1 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 0, 1, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 1, 0, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 1, 1, v1 ) );
+	// block 1,1 = v1 * I4									// block 1,2 = v2 * I4									// block 1,3 = v2 * I4
+	tet_triplets.push_back(SparseMatrixTriplet( 0, 0, v1));	tet_triplets.push_back(SparseMatrixTriplet( 0, 4, v2));	tet_triplets.push_back(SparseMatrixTriplet( 0,  8, v2));
+	tet_triplets.push_back(SparseMatrixTriplet( 1, 1, v1));	tet_triplets.push_back(SparseMatrixTriplet( 1, 5, v2));	tet_triplets.push_back(SparseMatrixTriplet( 1,  9, v2));
+	tet_triplets.push_back(SparseMatrixTriplet( 2, 2, v1));	tet_triplets.push_back(SparseMatrixTriplet( 2, 6, v2));	tet_triplets.push_back(SparseMatrixTriplet( 2, 10, v2));
+	tet_triplets.push_back(SparseMatrixTriplet( 3, 3, v1));	tet_triplets.push_back(SparseMatrixTriplet( 3, 7, v2));	tet_triplets.push_back(SparseMatrixTriplet( 3, 11, v2));
 
-	tet_triplets.push_back( SparseMatrixTriplet( 2, 2, v1 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 2, 3, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 3, 2, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 3, 3, v1 ) );
-
-	tet_triplets.push_back( SparseMatrixTriplet( 4, 4, v1 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 4, 5, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 5, 4, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 5, 5, v1 ) );
-
-	tet_triplets.push_back( SparseMatrixTriplet( 6, 6, v1 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 6, 7, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 7, 6, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 7, 7, v1 ) );
-
-	tet_triplets.push_back( SparseMatrixTriplet( 8, 8, v1 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 8, 9, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 9, 8, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 9, 9, v1 ) );
-
-	tet_triplets.push_back( SparseMatrixTriplet( 10, 10, v1 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 10, 11, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 11, 10, v2 ) );
-	tet_triplets.push_back( SparseMatrixTriplet( 11, 11, v1 ) );
-
+	// block 2,1 = v2 * I4									// block 2,2 = v1 * I4									// block 2,3 = v2 * I4
+	tet_triplets.push_back(SparseMatrixTriplet( 4, 0, v2));	tet_triplets.push_back(SparseMatrixTriplet( 4, 4, v1));	tet_triplets.push_back(SparseMatrixTriplet( 4,  8, v2));
+	tet_triplets.push_back(SparseMatrixTriplet( 5, 1, v2));	tet_triplets.push_back(SparseMatrixTriplet( 5, 5, v1));	tet_triplets.push_back(SparseMatrixTriplet( 5,  9, v2));
+	tet_triplets.push_back(SparseMatrixTriplet( 6, 2, v2));	tet_triplets.push_back(SparseMatrixTriplet( 6, 6, v1));	tet_triplets.push_back(SparseMatrixTriplet( 6, 10, v2));
+	tet_triplets.push_back(SparseMatrixTriplet( 7, 3, v2));	tet_triplets.push_back(SparseMatrixTriplet( 7, 7, v1));	tet_triplets.push_back(SparseMatrixTriplet( 7, 11, v2));
+	
+	// block 3,1 = v2 * I4									// block 3,2 = v2 * I4									// block 3,3 = v1 * I4
+	tet_triplets.push_back(SparseMatrixTriplet( 8, 0, v2));	tet_triplets.push_back(SparseMatrixTriplet( 8, 4, v2));	tet_triplets.push_back(SparseMatrixTriplet( 8,  8, v1));
+	tet_triplets.push_back(SparseMatrixTriplet( 9, 1, v2));	tet_triplets.push_back(SparseMatrixTriplet( 9, 5, v2));	tet_triplets.push_back(SparseMatrixTriplet( 9,  9, v1));
+	tet_triplets.push_back(SparseMatrixTriplet(10, 2, v2));	tet_triplets.push_back(SparseMatrixTriplet(10, 6, v2));	tet_triplets.push_back(SparseMatrixTriplet(10, 10, v1));
+	tet_triplets.push_back(SparseMatrixTriplet(11, 3, v2));	tet_triplets.push_back(SparseMatrixTriplet(11, 7, v2));	tet_triplets.push_back(SparseMatrixTriplet(11, 11, v1));
+	
 	m_A_tet.resize(12,12);
 	m_A_tet.setFromTriplets( tet_triplets.begin(), tet_triplets.end() );
 
@@ -330,9 +318,8 @@ Simulation::CreateLHSMatrix()
 
 		S_i = CreateSMatrix(*c);
 
-
 		SparseMatrix S_i_transpose = S_i.transpose();
-		SparseMatrix A_i_transpose = A_i.transpose();
+		SparseMatrix A_i_transpose = A_i;
 			
 		S_i_transpose.applyThisOnTheLeft(A_i_transpose);
 		A_i_transpose.applyThisOnTheLeft(A_i);
@@ -386,7 +373,7 @@ Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 
 		S_i = CreateSMatrix(*c);
 		SparseMatrix S_i_transpose = S_i.transpose();
-		SparseMatrix A_i_transpose = A_i.transpose();
+		SparseMatrix A_i_transpose = A_i;
 			
 		S_i_transpose.applyThisOnTheLeft(A_i_transpose);
 		A_i_transpose.applyThisOnTheLeft(B_i);
@@ -406,7 +393,6 @@ void Simulation::Update()
 	calculateExternalForce();
 
 	// update cloth
-	m_integration_method = INTEGRATION_LOCAL_GLOBAL;
 	switch (m_integration_method)
 	{
 	case INTEGRATION_EXPLICIT_EULER:

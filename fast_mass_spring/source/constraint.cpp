@@ -91,7 +91,7 @@ ScalarType AttachmentConstraint::EvaluatePotentialEnergy(const VectorX& x)
 	ScalarType k = *m_stiffness;
 	EigenVector3 current_position = x.block_vector(m_p0);
 	ScalarType current_length = (current_position - m_fixd_point).norm();
-	return 0.5 * k * current_length * current_length;
+	return 0.5 * k * current_length * current_length * 10;
 }
 
 // attachment spring gradient: k*(current_length)*current_direction
@@ -266,8 +266,19 @@ TetConstraint::~TetConstraint()
 ScalarType TetConstraint::EvaluatePotentialEnergy(const VectorX& x)
 {
 	// TODO
+	EigenMatrix3 F;
+	getDeformationGradient(F, x);
 
-	return 0.0;
+	EigenMatrix3 U = F;
+	F.transpose().applyThisOnTheLeft(U);
+	U = U.cwiseSqrt();
+
+	EigenMatrix3 R = U.inverse();
+	F.applyThisOnTheLeft(R);
+
+	ScalarType mu = *m_stiffness;
+	ScalarType returnValue = 0.5 * mu * (F-R).norm() * (F-R).norm(); 
+	return returnValue;
 }
 
 void TetConstraint::EvaluateGradient(const VectorX& x, VectorX& gradient)
@@ -288,11 +299,26 @@ void TetConstraint::calculateDPDF(EigenMatrix3 dPdF[][3], const EigenMatrix3& U,
 void TetConstraint::getDeformationGradient(EigenMatrix3& F, const VectorX& x)
 {
 	// TODO
+	EigenVector3 x1, x2, x3, x4;
+	x1 = x.block_vector(m_p[0]);
+	x2 = x.block_vector(m_p[1]);
+	x3 = x.block_vector(m_p[2]);
+	x4 = x.block_vector(m_p[3]);
+
+	EigenMatrix3 Ds;
+	Ds(0,0) = x1.x() - x4.x();	Ds(0,0) = x2.x() - x4.x();	Ds(0,0) = x3.x() - x4.x();
+	Ds(0,0) = x1.y() - x4.y();	Ds(0,0) = x2.y() - x4.y();	Ds(0,0) = x3.y() - x4.y();
+	Ds(0,0) = x1.z() - x4.z();	Ds(0,0) = x2.z() - x4.z();	Ds(0,0) = x3.z() - x4.z();
+
+	F = m_Dr_inv;
+	Ds.applyThisOnTheLeft(F);
 }
 
 void TetConstraint::getStressTensor(EigenMatrix3& P, const EigenMatrix3& F, const EigenMatrix3& R)
 {
 	// TODO
+	ScalarType mu = *m_stiffness;
+	P = mu * (F - R);
 }
 
 void TetConstraint::singularValueDecomp(EigenMatrix3& U, EigenVector3& SIGMA, EigenMatrix3& V, const EigenMatrix3& A)
