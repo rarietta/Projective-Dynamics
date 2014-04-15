@@ -44,7 +44,7 @@ Simulation::Simulation()
 
 	std::vector<SparseMatrixTriplet> att_triplets;
 
-	float av1 = -1;
+	float av1 = 1;
 
 	att_triplets.push_back( SparseMatrixTriplet( 0, 0, av1 ) );
 	att_triplets.push_back( SparseMatrixTriplet( 1, 1, av1 ) );
@@ -64,22 +64,25 @@ Simulation::Simulation()
 	float sv2 = -0.5;
 
 	spr_triplets.push_back( SparseMatrixTriplet( 0, 0, sv1 ) );
-	spr_triplets.push_back( SparseMatrixTriplet( 0, 1, sv2 ) );
-	spr_triplets.push_back( SparseMatrixTriplet( 1, 0, sv2 ) );
 	spr_triplets.push_back( SparseMatrixTriplet( 1, 1, sv1 ) );
-
 	spr_triplets.push_back( SparseMatrixTriplet( 2, 2, sv1 ) );
-	spr_triplets.push_back( SparseMatrixTriplet( 2, 3, sv2 ) );
-	spr_triplets.push_back( SparseMatrixTriplet( 3, 2, sv2 ) );
-	spr_triplets.push_back( SparseMatrixTriplet( 3, 3, sv1 ) );
+	
+	spr_triplets.push_back( SparseMatrixTriplet( 0, 3, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 1, 4, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 2, 5, sv2 ) );
+	
+	spr_triplets.push_back( SparseMatrixTriplet( 3, 0, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 4, 1, sv2 ) );
+	spr_triplets.push_back( SparseMatrixTriplet( 5, 2, sv2 ) );
 
+	spr_triplets.push_back( SparseMatrixTriplet( 3, 3, sv1 ) );
 	spr_triplets.push_back( SparseMatrixTriplet( 4, 4, sv1 ) );
-	spr_triplets.push_back( SparseMatrixTriplet( 4, 5, sv2 ) );
-	spr_triplets.push_back( SparseMatrixTriplet( 5, 4, sv2 ) );
 	spr_triplets.push_back( SparseMatrixTriplet( 5, 5, sv1 ) );
 
 	m_A_spring.resize(6,6);
 	m_A_spring.setFromTriplets( spr_triplets.begin(), spr_triplets.end() );
+
+	std::cout << m_A_spring << std::endl;
 
 
 	////////////////////////////////////////////////////
@@ -211,8 +214,8 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 		EigenVector3 current_vector = current_position_p1 - current_position_p2;
 		ScalarType current_length = current_vector.norm();
 		ScalarType diff = current_length - rest_length;
-		p1 = current_position_p1 - (diff/2.0) * current_vector;
-		p2 = current_position_p2 + (diff/2.0) * current_vector;
+		p1 = current_position_p1 - (diff/2.0) * current_vector.normalized();
+		p2 = current_position_p2 + (diff/2.0) * current_vector.normalized();
 
 		p_j.resize(6);
 		p_j.block_vector(0) = p1;
