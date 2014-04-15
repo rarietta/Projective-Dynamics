@@ -222,21 +222,34 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 VectorX
 Simulation::SolveLinearSystem( SparseMatrix A, VectorX b )
 {
-	VectorX q_n1;
+	VectorX x;
 
+
+	// clamp very small values in A to 0
+	const float A_THRESH = 0.001f;
+	Eigen::SparseMatrix<double> clamped_A( A.rows(), A.cols() );
+	std::vector<SparseMatrixTriplet> new_A_triplets;
+	for ( int k = 0; k < A.outerSize(); ++k ) {
+		for ( Eigen::SparseMatrix<double>::InnerIterator it( A, k ); it; ++it ) {
+			// ignore values very close to 0
+			if ( it.value() < -A_THRESH || it.value() > A_THRESH ) {
+				new_A_triplets.push_back( SparseMatrixTriplet( it.row(), it.col(), it.value() ) );
+			}
+		}
+	}
+	clamped_A.setFromTriplets( new_A_triplets.begin(), new_A_triplets.end() );
+
+
+	// solve linear system, method 1
 	Eigen::LLT<Matrix> llt;
+	llt.compute( clamped_A );
+	x = llt.solve( b );
+	return x;
 
-	//std::cout << "Here is the matrix A:\n" << A << std::endl;
-	//std::cout << "Here is the right hand side b:\n" << b << std::endl;
-	//std::cout << "Computing LLT decomposition..." << std::endl;
-
-	llt.compute( A );
-	
-	q_n1 = llt.solve( b );
-
-	//std::cout << "The solution is:\n" << q_n1 << std::endl;
-
-	return q_n1;
+	// solve linear system, method 2
+	//Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> chol(A);
+	//x = chol.solve(b);
+	//return x;
 }
 
 SparseMatrix
