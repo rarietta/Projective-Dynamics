@@ -241,11 +241,11 @@ Simulation::SolveLinearSystem( VectorX b )
 	//Eigen::LLT<Matrix> llt;
 	//llt.compute( A );
 
-	simpleTimer::start();
+	//simpleTimer::start();
 
 	VectorX x = m_llt.solve( b );
 
-	simpleTimer::stop( "SolveLinearSystem" );
+	//simpleTimer::stop( "SolveLinearSystem" );
 
 	return x;
 }
@@ -416,7 +416,7 @@ Simulation::MultiplyRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 
 void Simulation::Update()
 {
-	//__int64 s_time = GetTimeMs64();
+	//simpleTimer::start();
 
 	// update inertia term
 	calculateInertiaY();
@@ -457,7 +457,11 @@ void Simulation::Update()
 				VectorX p_j = ProjectOnConstraintSet(*c, q_n1);
 				p_vec[index++] = p_j;
 			}
+
+			simpleTimer::start();
 			VectorX p = MultiplyRHSMatrix(s_n, p_vec);
+			simpleTimer::stop("CreateRHSMatrix");
+			
 			q_n1 = SolveLinearSystem(p);
 		}
 		
@@ -465,9 +469,6 @@ void Simulation::Update()
 		m_mesh->m_current_positions = q_n1;
 		m_mesh->m_current_velocities = v_n1;
 		
-		//__int64 e_time = GetTimeMs64();
-		//std::cout << "Update timing: " << e_time - s_time << std::endl;
-
 		break;
 	}
 
