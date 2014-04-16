@@ -34,6 +34,8 @@
 #include "simulation.h"
 #include "timer_wrapper.h"
 
+#include <Windows.h>
+
 TimerWrapper g_integration_timer;
 
 Simulation::Simulation()
@@ -238,7 +240,15 @@ Simulation::SolveLinearSystem( VectorX b )
 	// solve linear system, method 1
 	//Eigen::LLT<Matrix> llt;
 	//llt.compute( A );
+
+	// example of how to time events
+	//__int64 s_time = GetTimeMs64();
+
 	VectorX x = m_llt.solve( b );
+
+	//__int64 e_time = GetTimeMs64();
+	//std::cout << e_time - s_time << std::endl;
+
 	return x;
 }
 
@@ -778,4 +788,27 @@ VectorX Simulation::collisionDetection(const VectorX x)
 	}
 
 	return penetration;
+}
+
+
+/* Returns the amount of milliseconds elapsed since the UNIX epoch. Works on both
+ * windows and linux. */
+
+__int64 Simulation::GetTimeMs64()
+{
+	/* Windows */
+	FILETIME ft;
+	LARGE_INTEGER li;
+
+	/* Get the amount of 100 nano seconds intervals elapsed since January 1, 1601 (UTC) and copy it
+	* to a LARGE_INTEGER structure. */
+	GetSystemTimeAsFileTime(&ft);
+	li.LowPart = ft.dwLowDateTime;
+	li.HighPart = ft.dwHighDateTime;
+
+	__int64 ret = li.QuadPart;
+	ret -= 116444736000000000LL; /* Convert from file time to UNIX epoch time. */
+	ret /= 10000; /* From 100 nano seconds (10^-7) to 1 millisecond (10^-3) intervals */
+
+	return ret;
 }
