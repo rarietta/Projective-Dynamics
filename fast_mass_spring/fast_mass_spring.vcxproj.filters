@@ -120,6 +120,9 @@
     <ClCompile Include="source\simulation.cpp">
       <Filter>Source Files\simulation\simulation</Filter>
     </ClCompile>
+    <ClCompile Include="source\simpleTimer.cpp">
+      <Filter>Source Files\simulation\simulation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\clock.h">
@@ -174,6 +177,9 @@
       <Filter>Source Files\simulation\constraints</Filter>
     </ClInclude>
     <ClInclude Include="source\simulation.h">
+      <Filter>Source Files\simulation\simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\simpleTimer.h">
       <Filter>Source Files\simulation\simulation</Filter>
     </ClInclude>
   </ItemGroup>

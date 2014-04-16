@@ -34,7 +34,7 @@
 #include "simulation.h"
 #include "timer_wrapper.h"
 
-#include <Windows.h>
+#include "simpleTimer.h"
 
 TimerWrapper g_integration_timer;
 
@@ -223,23 +223,30 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 VectorX
 Simulation::SolveLinearSystem( VectorX b )
 {
-	/*
 	// clamp very small values in A to 0
-	const float A_THRESH = 0.001f;
-	Eigen::SparseMatrix<double> clamped_A( A.rows(), A.cols() );
-	std::vector<SparseMatrixTriplet> new_A_triplets;
-	for ( int k = 0; k < A.outerSize(); ++k ) {
-		for ( Eigen::SparseMatrix<double>::InnerIterator it( A, k ); it; ++it ) {
-			// ignore values very close to 0
-			if ( it.value() < -A_THRESH || it.value() > A_THRESH ) {
-				new_A_triplets.push_back( SparseMatrixTriplet( it.row(), it.col(), it.value() ) );
-			}
-		}
-	}
-	clamped_A.setFromTriplets( new_A_triplets.begin(), new_A_triplets.end() );
-	*/
-	
+	//const float A_THRESH = 0.001f;
+	//Eigen::SparseMatrix<double> clamped_A( A.rows(), A.cols() );
+	//std::vector<SparseMatrixTriplet> new_A_triplets;
+	//for ( int k = 0; k < A.outerSize(); ++k ) {
+	//	for ( Eigen::SparseMatrix<double>::InnerIterator it( A, k ); it; ++it ) {
+	//		// ignore values very close to 0
+	//		if ( it.value() < -A_THRESH || it.value() > A_THRESH ) {
+	//			new_A_triplets.push_back( SparseMatrixTriplet( it.row(), it.col(), it.value() ) );
+	//		}
+	//	}
+	//}
+	//clamped_A.setFromTriplets( new_A_triplets.begin(), new_A_triplets.end() );
+
+	// solve linear system, method 1
+	//Eigen::LLT<Matrix> llt;
+	//llt.compute( A );
+
+	simpleTimer::start();
+
 	VectorX x = m_llt.solve( b );
+
+	simpleTimer::stop( "SolveLinearSystem" );
+
 	return x;
 }
 
@@ -806,27 +813,4 @@ VectorX Simulation::collisionDetection(const VectorX x)
 	}
 
 	return penetration;
-}
-
-
-/* Returns the amount of milliseconds elapsed since the UNIX epoch. Works on both
- * windows and linux. */
-
-__int64 Simulation::GetTimeMs64()
-{
-	/* Windows */
-	FILETIME ft;
-	LARGE_INTEGER li;
-
-	/* Get the amount of 100 nano seconds intervals elapsed since January 1, 1601 (UTC) and copy it
-	* to a LARGE_INTEGER structure. */
-	GetSystemTimeAsFileTime(&ft);
-	li.LowPart = ft.dwLowDateTime;
-	li.HighPart = ft.dwHighDateTime;
-
-	__int64 ret = li.QuadPart;
-	ret -= 116444736000000000LL; /* Convert from file time to UNIX epoch time. */
-	ret /= 10000; /* From 100 nano seconds (10^-7) to 1 millisecond (10^-3) intervals */
-
-	return ret;
 }
