@@ -76,6 +76,7 @@ public:
 	virtual void  EvaluateGradient(const VectorX& x, VectorX& gradient);
 	virtual void  EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTriplet>& hessian_triplets);
 	virtual void  EvaluateWeightedLaplacian(std::vector<SparseMatrixTriplet>& laplacian_triplets);
+	SparseMatrix S;
 
 protected:
 	unsigned int m_p0;
@@ -110,6 +111,7 @@ public:
 	virtual void  EvaluateGradient(const VectorX& x, VectorX& gradient);
 	virtual void  EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTriplet>& hessian_triplets);
 	virtual void  EvaluateWeightedLaplacian(std::vector<SparseMatrixTriplet>& laplacian_triplets);
+	SparseMatrix S;
 
 protected:
 	unsigned int m_p1, m_p2;
@@ -134,6 +136,7 @@ public:
 	virtual ScalarType  EvaluatePotentialEnergy(const VectorX& x);
 	virtual void  EvaluateGradient(const VectorX& x, VectorX& gradient);
 	virtual void  EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTriplet>& hessian_triplets);
+	SparseMatrix S;
 
 private:
 	void getDeformationGradient(EigenMatrix3& F, const VectorX& x);
