@@ -83,9 +83,6 @@ public:
 	VectorX CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec);
 	void CreateLHSMatrix(void);
 
-	// method for timing for optimization
-	__int64 GetTimeMs64( void );
-
 	// select/unselect/move/save/load attachment constratins
 	ScalarType TryToSelectAttachmentConstraint(const EigenVector3& p0, const EigenVector3& dir); // return ray_projection_plane_distance if hit; return -1 otherwise.
 	bool TryToToggleAttachmentConstraint(const EigenVector3& p0, const EigenVector3& dir); // true if hit some vertex/constraint
