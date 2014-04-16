@@ -416,7 +416,9 @@ Simulation::MultiplyRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 
 void Simulation::Update()
 {
-	//simpleTimer::start();
+	// timers
+	simpleTimer t1, t2, t3;
+	t1.start(); // "entire update" start
 
 	// update inertia term
 	calculateInertiaY();
@@ -445,12 +447,16 @@ void Simulation::Update()
 		VectorX q_n = m_mesh->m_current_positions;
 		VectorX v_n = m_mesh->m_current_velocities;
 		VectorX s_n = q_n + m_h*v_n + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
-		
+
 		VectorX q_n1 = s_n;
 		std::vector<VectorX> p_vec;
 		p_vec.resize(m_constraints.size());
+
 		for (int i = 0; i < m_iterations_per_frame; i++)
 		{
+			// timers
+			t2.start(); // "local projection step" start
+
 			int index = 0;
 			for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
 			{
@@ -458,13 +464,18 @@ void Simulation::Update()
 				p_vec[index++] = p_j;
 			}
 
-			simpleTimer::start();
+			// timers
+			t2.stop( "local projection step" );
+			t3.start(); // "MultiplyRHSMatrix() function call" start
+
 			VectorX p = MultiplyRHSMatrix(s_n, p_vec);
-			simpleTimer::stop("CreateRHSMatrix");
 			
+			// timers
+			t3.stop( "MultiplyRHSMatrix() function call" );
+
 			q_n1 = SolveLinearSystem(p);
 		}
-		
+
 		VectorX v_n1 = (q_n1 - q_n)/m_h;
 		m_mesh->m_current_positions = q_n1;
 		m_mesh->m_current_velocities = v_n1;
@@ -483,6 +494,12 @@ void Simulation::Update()
 
 	// update velocity and damp
 	dampVelocity();
+
+	// timers
+	t1.stop( "entire update" );
+
+	// debug
+	std::cin.ignore();
 }
 
 void Simulation::DrawConstraints(const VBO& vbos)
