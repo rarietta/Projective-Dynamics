@@ -146,19 +146,7 @@ void Simulation::Reset()
 
 	setupConstraints();
 	CreateLHSMatrix();
-	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
-	{
-		AttachmentConstraint *ac;
-		SpringConstraint *sc;
-		TetConstraint *tc;
-
-		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
-			ac->S = CreateSMatrix(*c);
-		if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
-			sc->S = CreateSMatrix(*c);
-		if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
-			tc->S = CreateSMatrix(*c);
-	}
+	CreateRHSMatrix();
 	SetReprefactorFlag();
 
 	m_selected_attachment_constraint = NULL;
@@ -347,11 +335,56 @@ Simulation::CreateLHSMatrix()
 	m_llt.compute(M);
 }
 
-VectorX
-Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
+void
+Simulation::CreateRHSMatrix()
 {
-	//__int64 s_time = GetTimeMs64();
+	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
+	{
+		ScalarType w_i;
+		SparseMatrix A_i;
+		SparseMatrix B_i;
+		
+		// is attachment constraint
+		AttachmentConstraint *ac;
+		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) {
+			w_i = ac->Stiffness();
+			A_i = m_A_attachment;
+			B_i = m_B_attachment;
+		}
 
+		// is spring constraint
+		SpringConstraint *sc;
+		if (sc = dynamic_cast<SpringConstraint*>(*c)) {
+			w_i = sc->Stiffness();
+			A_i = m_A_spring;
+			B_i = m_B_spring;
+		}
+	
+		// is tet constraint
+		TetConstraint *tc;
+		if (tc = dynamic_cast<TetConstraint*>(*c)) {
+			w_i = tc->Stiffness();
+			A_i = m_A_tet;
+			B_i = m_B_tet;
+		}
+		
+		SparseMatrix S_i = CreateSMatrix(*c);
+		SparseMatrix S_i_transpose = S_i.transpose();			
+		S_i_transpose.applyThisOnTheLeft(A_i);
+		A_i.applyThisOnTheLeft(B_i);
+
+		if (ac = dynamic_cast<AttachmentConstraint*>(*c))	// is attachment constraint
+			ac->m_RHS = w_i * B_i;
+		if (sc = dynamic_cast<SpringConstraint*>(*c))		// is spring constraint		
+			sc->m_RHS = w_i * B_i;
+		if (tc = dynamic_cast<TetConstraint*>(*c))			// is tetrahedral constraint
+			tc->m_RHS = w_i * B_i;
+	}
+}
+
+VectorX
+Simulation::MultiplyRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
+{
 	VectorX M = s_n;
 	SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
 	coeff.applyThisOnTheLeft(M);
@@ -359,51 +392,18 @@ Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 	int index = 0;
 	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
 	{
-		ScalarType w_i;
-		SparseMatrix S_i;
-		SparseMatrix A_i;
-		SparseMatrix B_i;
 		VectorX p_i_local = p_vec[index++];
-
-		AttachmentConstraint *ac;
-		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
-		{
-			S_i = ac->S;
-			w_i = ac->Stiffness();
-			A_i = m_A_attachment;
-			B_i = m_B_attachment;
-		}
-
-		SpringConstraint *sc;
-		if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
-		{
-			S_i = sc->S;
-			w_i = sc->Stiffness();
-			A_i = m_A_spring;
-			B_i = m_B_spring;
-		}
-	
-		TetConstraint *tc;
-		if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
-		{
-			S_i = tc->S;
-			w_i = tc->Stiffness();
-			A_i = m_A_tet;
-			B_i = m_B_tet;
-		}
-
-		SparseMatrix S_i_transpose = S_i.transpose();			
-		S_i_transpose.applyThisOnTheLeft(A_i);
-		A_i.applyThisOnTheLeft(B_i);
-		B_i.applyThisOnTheLeft(p_i_local);
-			
-		M += (w_i * p_i_local);
-	}
-	
-	//std::cout << "index = " << index << std::endl;
-	//__int64 e_time = GetTimeMs64();
-	//std::cout << "CreateRHSMatrix timing: " << e_time - s_time << std::endl;
-
+		AttachmentConstraint* ac;
+		if (ac = dynamic_cast<AttachmentConstraint*>(*c))	// is attachment constraint
+			ac->m_RHS.applyThisOnTheLeft(p_i_local);
+		SpringConstraint* sc;
+		if (sc = dynamic_cast<SpringConstraint*>(*c))		// is spring constraint		
+			sc->m_RHS.applyThisOnTheLeft(p_i_local);
+		TetConstraint* tc;
+		if (tc = dynamic_cast<TetConstraint*>(*c))			// is tetrahedral constraint
+			tc->m_RHS.applyThisOnTheLeft(p_i_local);
+		M += (p_i_local);
+	}	
 	return M;
 }
 
@@ -450,7 +450,7 @@ void Simulation::Update()
 				VectorX p_j = ProjectOnConstraintSet(*c, q_n1);
 				p_vec[index++] = p_j;
 			}
-			VectorX p = CreateRHSMatrix(s_n, p_vec);
+			VectorX p = MultiplyRHSMatrix(s_n, p_vec);
 			q_n1 = SolveLinearSystem(p);
 		}
 		

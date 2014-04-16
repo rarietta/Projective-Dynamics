@@ -80,8 +80,9 @@ public:
 	VectorX ProjectOnConstraintSet(Constraint* c, VectorX q);
 	VectorX SolveLinearSystem(VectorX b);
 	SparseMatrix CreateSMatrix(Constraint* c);
-	VectorX CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec);
+	VectorX MultiplyRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec);
 	void CreateLHSMatrix(void);
+	void CreateRHSMatrix(void);
 
 	// method for timing for optimization
 	__int64 GetTimeMs64( void );
