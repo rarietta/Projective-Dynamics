@@ -77,12 +77,13 @@ public:
 	void UpdateAnimation(const int fn);
 	void Update();
 	void DrawConstraints(const VBO& vbos);
-	VectorX ProjectOnConstraintSet(Constraint* c, VectorX q);
-	VectorX SolveLinearSystem(VectorX b);
-	SparseMatrix CreateSMatrix(Constraint* c);
-	VectorX MultiplyRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec);
+
+	// projection based dynamics functions
 	void CreateLHSMatrix(void);
 	void CreateRHSMatrix(void);
+	SparseMatrix CreateSMatrix(Constraint* c);
+	VectorX ProjectOnConstraintSet(Constraint* c, VectorX q);
+	VectorX SumRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec);
 
 	// select/unselect/move/save/load attachment constratins
 	ScalarType TryToSelectAttachmentConstraint(const EigenVector3& p0, const EigenVector3& dir); // return ray_projection_plane_distance if hit; return -1 otherwise.
