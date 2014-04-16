@@ -220,36 +220,6 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 	return p_j;
 }
 
-VectorX
-Simulation::SolveLinearSystem( VectorX b )
-{
-	// clamp very small values in A to 0
-	//const float A_THRESH = 0.001f;
-	//Eigen::SparseMatrix<double> clamped_A( A.rows(), A.cols() );
-	//std::vector<SparseMatrixTriplet> new_A_triplets;
-	//for ( int k = 0; k < A.outerSize(); ++k ) {
-	//	for ( Eigen::SparseMatrix<double>::InnerIterator it( A, k ); it; ++it ) {
-	//		// ignore values very close to 0
-	//		if ( it.value() < -A_THRESH || it.value() > A_THRESH ) {
-	//			new_A_triplets.push_back( SparseMatrixTriplet( it.row(), it.col(), it.value() ) );
-	//		}
-	//	}
-	//}
-	//clamped_A.setFromTriplets( new_A_triplets.begin(), new_A_triplets.end() );
-
-	// solve linear system, method 1
-	//Eigen::LLT<Matrix> llt;
-	//llt.compute( A );
-
-	//simpleTimer::start();
-
-	VectorX x = m_llt.solve( b );
-
-	//simpleTimer::stop( "SolveLinearSystem" );
-
-	return x;
-}
-
 SparseMatrix
 Simulation::CreateSMatrix(Constraint* c)
 {
@@ -304,35 +274,34 @@ Simulation::CreateLHSMatrix()
 		SparseMatrix B_i;
 		ScalarType w_i;
 
+		// is attachment constraint
 		AttachmentConstraint *ac;
-		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
-		{
+		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) {
 			w_i = ac->Stiffness();
 			A_i = m_A_attachment;
 			B_i = m_B_attachment;
 		}
 
+		// is spring constraint
 		SpringConstraint *sc;
-		if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
-		{
+		if (sc = dynamic_cast<SpringConstraint*>(*c)) {
 			w_i = sc->Stiffness();
 			A_i = m_A_spring;
 			B_i = m_B_spring;
 		}
 	
+		// is tetrahedral constraint
 		TetConstraint *tc;
-		if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
-		{
+		if (tc = dynamic_cast<TetConstraint*>(*c)) {
 			w_i = tc->Stiffness();
 			A_i = m_A_tet;
 			B_i = m_B_tet;
 		}
 
 		S_i = CreateSMatrix(*c);
-
 		SparseMatrix S_i_transpose = S_i.transpose();
 		SparseMatrix A_i_transpose = A_i;
-			
+	
 		S_i_transpose.applyThisOnTheLeft(A_i_transpose);
 		A_i_transpose.applyThisOnTheLeft(A_i);
 		A_i.applyThisOnTheLeft(S_i);
@@ -380,22 +349,15 @@ Simulation::CreateRHSMatrix()
 		S_i_transpose.applyThisOnTheLeft(A_i);
 		A_i.applyThisOnTheLeft(B_i);
 
-		if (ac = dynamic_cast<AttachmentConstraint*>(*c))	// is attachment constraint
-			ac->m_RHS = w_i * B_i;
-		if (sc = dynamic_cast<SpringConstraint*>(*c))		// is spring constraint		
-			sc->m_RHS = w_i * B_i;
-		if (tc = dynamic_cast<TetConstraint*>(*c))			// is tetrahedral constraint
-			tc->m_RHS = w_i * B_i;
+		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) { ac->m_RHS = w_i * B_i; }
+		if (sc = dynamic_cast<SpringConstraint*>(*c))	  { sc->m_RHS = w_i * B_i; }
+		if (tc = dynamic_cast<TetConstraint*>(*c))		  {	tc->m_RHS = w_i * B_i; }
 	}
 }
 
 VectorX
-Simulation::MultiplyRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
+Simulation::SumRHSMatrix(VectorX b, std::vector<VectorX> p_vec)
 {
-	VectorX M = s_n;
-	SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
-	coeff.applyThisOnTheLeft(M);
-
 	int index = 0;
 	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
 	{
@@ -409,9 +371,9 @@ Simulation::MultiplyRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 		TetConstraint* tc;
 		if (tc = dynamic_cast<TetConstraint*>(*c))			// is tetrahedral constraint
 			tc->m_RHS.applyThisOnTheLeft(p_i_local);
-		M += (p_i_local);
+		b += (p_i_local);
 	}	
-	return M;
+	return b;
 }
 
 void Simulation::Update()
@@ -445,9 +407,9 @@ void Simulation::Update()
 	//TODO 
 	{
 		VectorX q_n = m_mesh->m_current_positions;
-		VectorX v_n = m_mesh->m_current_velocities;
-		VectorX s_n = q_n + m_h*v_n + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
-
+		VectorX s_n = m_inertia_y + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
+		SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
+		
 		VectorX q_n1 = s_n;
 		std::vector<VectorX> p_vec;
 		p_vec.resize(m_constraints.size());
@@ -466,14 +428,19 @@ void Simulation::Update()
 
 			// timers
 			t2.stop( "local projection step" );
+			
+			VectorX b = s_n;
+			coeff.applyThisOnTheLeft(b);
+
+			// timers
 			t3.start(); // "MultiplyRHSMatrix() function call" start
 
-			VectorX p = MultiplyRHSMatrix(s_n, p_vec);
+			VectorX p = SumRHSMatrix(b, p_vec);
 			
 			// timers
 			t3.stop( "MultiplyRHSMatrix() function call" );
-
-			q_n1 = SolveLinearSystem(p);
+			
+			q_n1 = m_llt.solve(p);
 		}
 
 		VectorX v_n1 = (q_n1 - q_n)/m_h;
