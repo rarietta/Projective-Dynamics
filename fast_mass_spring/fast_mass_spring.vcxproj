@@ -143,6 +143,7 @@
     <ClCompile Include="source\mesh.cpp" />
     <ClCompile Include="source\primitive.cpp" />
     <ClCompile Include="source\scene.cpp" />
+    <ClCompile Include="source\simpleTimer.cpp" />
     <ClCompile Include="source\simulation.cpp" />
     <ClCompile Include="source\stb_image.c" />
     <ClCompile Include="source\stb_image_write.c" />
@@ -161,6 +162,7 @@
     <ClInclude Include="source\opengl_headers.h" />
     <ClInclude Include="source\primitive.h" />
     <ClInclude Include="source\scene.h" />
+    <ClInclude Include="source\simpleTimer.h" />
     <ClInclude Include="source\simulation.h" />
     <ClInclude Include="source\stb_image.h" />
     <ClInclude Include="source\stb_image_write.h" />
