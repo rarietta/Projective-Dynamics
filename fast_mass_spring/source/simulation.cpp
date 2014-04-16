@@ -336,10 +336,9 @@ Simulation::CreateLHSMatrix()
 VectorX
 Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 {
-	VectorX s_local = s_n;
+	VectorX M = s_n;
 	SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
-	coeff.applyThisOnTheLeft(s_local);
-	VectorX M = s_local;
+	coeff.applyThisOnTheLeft(M);
 
 	int index = 0;
 	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
@@ -375,11 +374,9 @@ Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 		}
 
 		S_i = CreateSMatrix(*c);
-		SparseMatrix S_i_transpose = S_i.transpose();
-		SparseMatrix A_i_transpose = A_i;
-			
-		S_i_transpose.applyThisOnTheLeft(A_i_transpose);
-		A_i_transpose.applyThisOnTheLeft(B_i);
+		SparseMatrix S_i_transpose = S_i.transpose();			
+		S_i_transpose.applyThisOnTheLeft(A_i);
+		A_i.applyThisOnTheLeft(B_i);
 		B_i.applyThisOnTheLeft(p_i_local);
 			
 		M += (w_i * p_i_local);
@@ -418,14 +415,15 @@ void Simulation::Update()
 		VectorX s_n = q_n + m_h*v_n + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
 		
 		VectorX q_n1 = s_n;
+		std::vector<VectorX> p_vec;
+		p_vec.resize(m_constraints.size());
 		for (int i = 0; i < m_iterations_per_frame; i++)
 		{
-			std::vector<VectorX> p_vec;
+			int index = 0;
 			for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
 			{
-				Constraint* Cj = *c;
-				VectorX p_j = ProjectOnConstraintSet(Cj, q_n1);
-				p_vec.push_back(p_j);
+				VectorX p_j = ProjectOnConstraintSet(*c, q_n1);
+				p_vec[index++] = p_j;
 			}
 			VectorX p = CreateRHSMatrix(s_n, p_vec);
 			q_n1 = SolveLinearSystem(p);
