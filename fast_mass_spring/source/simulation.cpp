@@ -82,9 +82,6 @@ Simulation::Simulation()
 	m_A_spring.resize(6,6);
 	m_A_spring.setFromTriplets( spr_triplets.begin(), spr_triplets.end() );
 
-	std::cout << m_A_spring << std::endl;
-
-
 	////////////////////////////////////////////////////
 	// setup A matrix for tet constraint
 	////////////////////////////////////////////////////
@@ -146,6 +143,7 @@ void Simulation::Reset()
 	m_mesh->m_expanded_system_dimension_1d = 0;
 
 	setupConstraints();
+	CreateLHSMatrix();
 	SetReprefactorFlag();
 
 	m_selected_attachment_constraint = NULL;
@@ -220,11 +218,9 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 }
 
 VectorX
-Simulation::SolveLinearSystem( SparseMatrix A, VectorX b )
+Simulation::SolveLinearSystem( VectorX b )
 {
-	VectorX x;
-
-
+	/*
 	// clamp very small values in A to 0
 	const float A_THRESH = 0.001f;
 	Eigen::SparseMatrix<double> clamped_A( A.rows(), A.cols() );
@@ -238,18 +234,12 @@ Simulation::SolveLinearSystem( SparseMatrix A, VectorX b )
 		}
 	}
 	clamped_A.setFromTriplets( new_A_triplets.begin(), new_A_triplets.end() );
-
-
+	*/
 	// solve linear system, method 1
-	Eigen::LLT<Matrix> llt;
-	llt.compute( clamped_A );
-	x = llt.solve( b );
+	//Eigen::LLT<Matrix> llt;
+	//llt.compute( A );
+	VectorX x = m_llt.solve( b );
 	return x;
-
-	// solve linear system, method 2
-	//Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> chol(A);
-	//x = chol.solve(b);
-	//return x;
 }
 
 SparseMatrix
@@ -292,23 +282,23 @@ Simulation::CreateSMatrix(Constraint* c)
 	return S;
 }
 
-SparseMatrix
+void
 Simulation::CreateLHSMatrix()
 {
-	SparseMatrix Y;
-	Y = m_mesh->m_mass_matrix / (m_h * m_h);
+	SparseMatrix M;
+	M = m_mesh->m_mass_matrix / (m_h * m_h);
 
 	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
 	{
-		ScalarType w_i;
 		SparseMatrix S_i;
 		SparseMatrix A_i;
 		SparseMatrix B_i;
+		ScalarType w_i;
 
 		AttachmentConstraint *ac;
 		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
 		{
-			w_i = ac->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			w_i = ac->Stiffness();
 			A_i = m_A_attachment;
 			B_i = m_B_attachment;
 		}
@@ -316,7 +306,7 @@ Simulation::CreateLHSMatrix()
 		SpringConstraint *sc;
 		if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
 		{
-			w_i = sc->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			w_i = sc->Stiffness();
 			A_i = m_A_spring;
 			B_i = m_B_spring;
 		}
@@ -324,7 +314,7 @@ Simulation::CreateLHSMatrix()
 		TetConstraint *tc;
 		if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
 		{
-			w_i = tc->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			w_i = tc->Stiffness();
 			A_i = m_A_tet;
 			B_i = m_B_tet;
 		}
@@ -338,9 +328,9 @@ Simulation::CreateLHSMatrix()
 		A_i_transpose.applyThisOnTheLeft(A_i);
 		A_i.applyThisOnTheLeft(S_i);
 			
-		Y += ( w_i * S_i);
+		M += (w_i * S_i);
 	}
-	return Y;
+	m_llt.compute(M);
 }
 
 VectorX
@@ -363,7 +353,7 @@ Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 		AttachmentConstraint *ac;
 		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) // is attachment constraint
 		{
-			w_i = ac->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			w_i = ac->Stiffness();
 			A_i = m_A_attachment;
 			B_i = m_B_attachment;
 		}
@@ -371,7 +361,7 @@ Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 		SpringConstraint *sc;
 		if (sc = dynamic_cast<SpringConstraint*>(*c)) // is spring constraint
 		{
-			w_i = sc->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			w_i = sc->Stiffness();
 			A_i = m_A_spring;
 			B_i = m_B_spring;
 		}
@@ -379,7 +369,7 @@ Simulation::CreateRHSMatrix(VectorX s_n, std::vector<VectorX> p_vec)
 		TetConstraint *tc;
 		if (tc = dynamic_cast<TetConstraint*>(*c)) // is tetrahedral constraint
 		{
-			w_i = tc->EvaluatePotentialEnergy(m_mesh->m_current_positions);
+			w_i = tc->Stiffness();
 			A_i = m_A_tet;
 			B_i = m_B_tet;
 		}
@@ -423,7 +413,6 @@ void Simulation::Update()
 	case INTEGRATION_LOCAL_GLOBAL:
 	//TODO 
 	{
-		SparseMatrix A = CreateLHSMatrix();
 		VectorX q_n = m_mesh->m_current_positions;
 		VectorX v_n = m_mesh->m_current_velocities;
 		VectorX s_n = q_n + m_h*v_n + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
@@ -438,8 +427,8 @@ void Simulation::Update()
 				VectorX p_j = ProjectOnConstraintSet(Cj, q_n1);
 				p_vec.push_back(p_j);
 			}
-			VectorX b = CreateRHSMatrix(s_n, p_vec);
-			q_n1 = SolveLinearSystem(A, b);
+			VectorX p = CreateRHSMatrix(s_n, p_vec);
+			q_n1 = SolveLinearSystem(p);
 		}
 		
 		VectorX v_n1 = (q_n1 - q_n)/m_h;
@@ -749,7 +738,8 @@ void Simulation::setupConstraints()
 
 void Simulation::dampVelocity()
 {
-	// TODO: post processing damping 
+	// TODO: post processing damping
+	m_mesh->m_current_velocities *= (1.0 - m_damping_coefficient);
 }
 
 void Simulation::calculateInertiaY()
