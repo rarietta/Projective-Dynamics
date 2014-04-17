@@ -2,10 +2,11 @@
 #include <string>
 #include <iostream>
 
-__int64 simpleTimer::start_time = GetTimeMs64();
+//__int64 simpleTimer::start_time = GetTimeMs64();
 
 simpleTimer::simpleTimer()
 {
+	start_time = GetTimeMs64();
 }
 
 simpleTimer::~simpleTimer()
