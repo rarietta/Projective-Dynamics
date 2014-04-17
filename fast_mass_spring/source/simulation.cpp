@@ -228,16 +228,18 @@ Simulation::CreateSMatrix(Constraint* c)
 	AttachmentConstraint* ac;
 	if (ac = dynamic_cast<AttachmentConstraint*>(c)) // is attachment constraint
 	{
+		s_triplets.clear();
 		unsigned int m_p0 = ac->GetConstrainedVertexIndex();
 		s_triplets.push_back(SparseMatrixTriplet(0, m_p0*3 + 0, 1));
 		s_triplets.push_back(SparseMatrixTriplet(1, m_p0*3 + 1, 1));
 		s_triplets.push_back(SparseMatrixTriplet(2, m_p0*3 + 2, 1));
-		S.resize(3, m_mesh->m_vertices_number*3);
+		S.resize(3, m_mesh->m_system_dimension);
 	}
 
 	SpringConstraint *sc;
 	if (sc = dynamic_cast<SpringConstraint*>(c)) // is spring constraint
 	{
+		s_triplets.clear();
 		unsigned int m_p1 = sc->GetConstrainedVertexIndex1();
 		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3 + 0, 1));
 		s_triplets.push_back(SparseMatrixTriplet(1, m_p1*3 + 1, 1));
@@ -246,13 +248,14 @@ Simulation::CreateSMatrix(Constraint* c)
 		s_triplets.push_back(SparseMatrixTriplet(3, m_p2*3 + 0, 1));
 		s_triplets.push_back(SparseMatrixTriplet(4, m_p2*3 + 1, 1));
 		s_triplets.push_back(SparseMatrixTriplet(5, m_p2*3 + 2, 1));
-		S.resize(6, m_mesh->m_vertices_number*3);
+		S.resize(6, m_mesh->m_system_dimension);
 	}
 	
 	TetConstraint *tc;
 	if (tc = dynamic_cast<TetConstraint*>(c)) // is tetrahedral constraint
 	{
 		//TODO: all of this
+		s_triplets.clear();
 		S.resize(12,m_mesh->m_vertices_number*3);
 	}
 
@@ -371,6 +374,7 @@ Simulation::SumRHSMatrix(VectorX b, std::vector<VectorX> p_vec)
 		TetConstraint* tc;
 		if (tc = dynamic_cast<TetConstraint*>(*c))			// is tetrahedral constraint
 			tc->m_RHS.applyThisOnTheLeft(p_i_local);
+
 		b += (p_i_local);
 	}	
 	return b;
@@ -411,12 +415,39 @@ void Simulation::Update()
 		p_vec.resize(m_constraints.size());
 		for (int i = 0; i < m_iterations_per_frame; i++)
 		{
+			VectorX p_j;
+			Constraint* c;
+			unsigned int tn;
+			int num_parallel_loops = ceil( m_constraints.size() / 64.0f );
+			omp_set_num_threads(m_constraints.size());
+
+			for (int j = 0; j < num_parallel_loops; j++)
+			{
+				#pragma omp parallel default(shared) private(c, p_j, tn)
+				{
+					#pragma omp critical
+					{
+						tn = omp_get_thread_num() + j*64;
+						if (tn < m_constraints.size())
+						{
+							c = m_constraints[tn];
+							p_j = ProjectOnConstraintSet(c, q_n1);
+							p_vec[tn] = p_j;
+						}
+					}
+				}
+			}
+
+			for (int j = 0; j < p_vec.size(); j++)
+				if (p_vec[j].rows() == 0) std::cout << "p_vec[" << j << "] is empty!" << std::endl;
+
+			/*
 			int index = 0;
 			for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
 			{
 				VectorX p_j = ProjectOnConstraintSet(*c, q_n1);
 				p_vec[index++] = p_j;
-			}
+			}*/
 			
 			VectorX b = s_n;
 			coeff.applyThisOnTheLeft(b);

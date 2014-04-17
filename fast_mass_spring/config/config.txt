@@ -1,11 +1,11 @@
 HasEnd              0
 TotalFrame          1000
 MeshBody            1
-Wireframe           1
+Wireframe           0
 Wireframe           1
 Texture             1
-ScreenWidth         1024
-ScreenHeight        768
+ScreenWidth         1089
+ScreenHeight        689
 
 MeshType            0
 MeshMass            1
@@ -21,10 +21,10 @@ QuasiStatics        0
 Subspace            1
 AttachmentStiffness 75
 StretchStiffness    5
-BendingStiffness    20
+BendingStiffness    5
 GravityConstant     9.8
 DampingCoefficient  0.001
-IterationsPerFrame  10
+IterationsPerFrame  1
 LSEnable            1
 LSStep              1
 LSAlpha             0.25
