@@ -177,8 +177,7 @@ void Simulation::UpdateAnimation(const int fn)
 	}
 }
 
-VectorX
-Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
+VectorX Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 {
 	VectorX p_j;
 
@@ -194,17 +193,13 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 	SpringConstraint *sc;
 	if (sc = dynamic_cast<SpringConstraint*>(c)) // is spring constraint
 	{
-		EigenVector3 p1, p2;
-		ScalarType rest_length = sc->GetRestLength();
-		unsigned int m_p1 = sc->GetConstrainedVertexIndex1();
-		unsigned int m_p2 = sc->GetConstrainedVertexIndex2();
-		EigenVector3 current_position_p1 = q.block_vector(m_p1);
-		EigenVector3 current_position_p2 = q.block_vector(m_p2);
+		EigenVector3 current_position_p1 = q.block_vector(sc->GetConstrainedVertexIndex1());
+		EigenVector3 current_position_p2 = q.block_vector(sc->GetConstrainedVertexIndex2());
 		EigenVector3 current_vector = current_position_p1 - current_position_p2;
-		ScalarType current_length = current_vector.norm();
-		ScalarType diff = current_length - rest_length;
-		p1 = current_position_p1 - (diff/2.0) * current_vector.normalized();
-		p2 = current_position_p2 + (diff/2.0) * current_vector.normalized();
+		ScalarType current_stretch = current_vector.norm() - sc->GetRestLength();
+		current_vector = current_vector.normalized();
+		EigenVector3 p1 = current_position_p1 - (current_stretch/2.0) * current_vector;
+		EigenVector3 p2 = current_position_p2 + (current_stretch/2.0) * current_vector;
 
 		p_j.resize(6);
 		p_j.block_vector(0) = p1;
@@ -220,8 +215,7 @@ Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
 	return p_j;
 }
 
-SparseMatrix
-Simulation::CreateSMatrix(Constraint* c)
+SparseMatrix Simulation::CreateSMatrix(Constraint* c)
 {
 	SparseMatrix S;
 	std::vector<SparseMatrixTriplet> s_triplets;
@@ -264,8 +258,7 @@ Simulation::CreateSMatrix(Constraint* c)
 	return S;
 }
 
-void
-Simulation::CreateLHSMatrix()
+void Simulation::CreateLHSMatrix()
 {
 	SparseMatrix M;
 	M = m_mesh->m_mass_matrix / (m_h * m_h);
@@ -274,7 +267,6 @@ Simulation::CreateLHSMatrix()
 	{
 		SparseMatrix S_i;
 		SparseMatrix A_i;
-		SparseMatrix B_i;
 		ScalarType w_i;
 
 		// is attachment constraint
@@ -282,7 +274,6 @@ Simulation::CreateLHSMatrix()
 		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) {
 			w_i = ac->Stiffness();
 			A_i = m_A_attachment;
-			B_i = m_B_attachment;
 		}
 
 		// is spring constraint
@@ -290,7 +281,6 @@ Simulation::CreateLHSMatrix()
 		if (sc = dynamic_cast<SpringConstraint*>(*c)) {
 			w_i = sc->Stiffness();
 			A_i = m_A_spring;
-			B_i = m_B_spring;
 		}
 	
 		// is tetrahedral constraint
@@ -298,7 +288,6 @@ Simulation::CreateLHSMatrix()
 		if (tc = dynamic_cast<TetConstraint*>(*c)) {
 			w_i = tc->Stiffness();
 			A_i = m_A_tet;
-			B_i = m_B_tet;
 		}
 
 		S_i = CreateSMatrix(*c);
@@ -314,56 +303,42 @@ Simulation::CreateLHSMatrix()
 	m_llt.compute(M);
 }
 
-void
-Simulation::CreateRHSMatrix()
+void Simulation::CreateRHSMatrix()
 {
-	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
+	for (int i = 0; i < m_constraints.size(); i++)
 	{
-		ScalarType w_i;
+		Constraint* c = m_constraints[i];
 		SparseMatrix A_i;
 		SparseMatrix B_i;
 		
 		// is attachment constraint
 		AttachmentConstraint *ac;
-		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) {
-			w_i = ac->Stiffness();
+		if (ac = dynamic_cast<AttachmentConstraint*>(c)) {
 			A_i = m_A_attachment;
 			B_i = m_B_attachment;
 		}
 
 		// is spring constraint
 		SpringConstraint *sc;
-		if (sc = dynamic_cast<SpringConstraint*>(*c)) {
-			w_i = sc->Stiffness();
+		if (sc = dynamic_cast<SpringConstraint*>(c)) {
 			A_i = m_A_spring;
 			B_i = m_B_spring;
 		}
 	
 		// is tet constraint
 		TetConstraint *tc;
-		if (tc = dynamic_cast<TetConstraint*>(*c)) {
-			w_i = tc->Stiffness();
+		if (tc = dynamic_cast<TetConstraint*>(c)) {
 			A_i = m_A_tet;
 			B_i = m_B_tet;
 		}
-		
-		SparseMatrix S_i = CreateSMatrix(*c);
+
+		ScalarType w_i = c->Stiffness();
+		SparseMatrix S_i = CreateSMatrix(c);
 		SparseMatrix S_i_transpose = S_i.transpose();			
 		S_i_transpose.applyThisOnTheLeft(A_i);
 		A_i.applyThisOnTheLeft(B_i);
-
-		if (ac = dynamic_cast<AttachmentConstraint*>(*c)) { ac->m_RHS = w_i * B_i; }
-		if (sc = dynamic_cast<SpringConstraint*>(*c))	  { sc->m_RHS = w_i * B_i; }
-		if (tc = dynamic_cast<TetConstraint*>(*c))		  {	tc->m_RHS = w_i * B_i; }
+		c->m_RHS = w_i * B_i;
 	}
-}
-
-VectorX
-Simulation::SumRHSMatrix(VectorX b, std::vector<VectorX> p_vec)
-{
-	for (int i = 0; i < p_vec.size(); i++)
-		b += p_vec[i];
-	return b;
 }
 
 void Simulation::Update()
@@ -396,40 +371,39 @@ void Simulation::Update()
 		VectorX s_n = m_inertia_y + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
 		SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
 		
+		// LOCAL SOLVE STEP
 		VectorX q_n1 = s_n;
-		std::vector<VectorX> p_vec;
-		p_vec.resize(m_constraints.size());
-
 		for (int i = 0; i < m_iterations_per_frame; i++)
 		{
+			VectorX b = s_n;
+			coeff.applyThisOnTheLeft(b);
+
 			VectorX p_j;
 			Constraint* c_j;
 			unsigned int tn;
+
 			int num_parallel_loops = ceil( m_constraints.size() / 64.0f );
 			omp_set_num_threads(m_constraints.size());
-
+			
 			for (int j = 0; j < num_parallel_loops; j++)
 			{
 				#pragma omp parallel default(shared) private(c_j, p_j, tn)
 				{
-					#pragma omp critical
+					tn = omp_get_thread_num() + j*64;
+					if (tn < m_constraints.size())
 					{
-						tn = omp_get_thread_num() + j*64;
-						if (tn < m_constraints.size())
+						#pragma omp critical
 						{
 							c_j = m_constraints[tn];
 							p_j = ProjectOnConstraintSet(c_j, q_n1);
 							c_j->m_RHS.applyThisOnTheLeft(p_j);
-							p_vec[tn] = p_j;
+							b += p_j;
 						}
 					}
 				}
 			}
-
-			VectorX b = s_n;
-			coeff.applyThisOnTheLeft(b);
-			for (int i = 0; i < p_vec.size(); i++)
-				b += p_vec[i];
+			
+			// GLOBAL SOLVE STEP
 			q_n1 = m_llt.solve(b);
 		}
 
@@ -581,6 +555,8 @@ void Simulation::AddAttachmentConstraint(unsigned int vertex_index)
 	m_constraints.push_back(ac);
 	m_mesh->m_expanded_system_dimension+=3;
 	m_mesh->m_expanded_system_dimension_1d+=1;
+	CreateLHSMatrix();
+	CreateRHSMatrix();
 }
 
 void Simulation::MoveSelectedAttachmentConstraintTo(const EigenVector3& target)

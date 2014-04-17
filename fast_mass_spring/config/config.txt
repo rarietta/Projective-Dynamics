@@ -1,18 +1,18 @@
 HasEnd              0
 TotalFrame          1000
 MeshBody            1
-Wireframe           0
+Wireframe           1
 Wireframe           1
 Texture             1
-ScreenWidth         1089
-ScreenHeight        689
+ScreenWidth         1129
+ScreenHeight        712
 
 MeshType            0
 MeshMass            1
 TetFilePath         ./mesh_models/cube86.mesh
 TetScaling          1
 TetFlip             0
-ClothDimension      20 20
+ClothDimension      9 9
 ClothCorners        -5 8 -5 5 -1.85 -3.26
 
 SimMethod           1
