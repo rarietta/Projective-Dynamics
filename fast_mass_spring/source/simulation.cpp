@@ -177,44 +177,6 @@ void Simulation::UpdateAnimation(const int fn)
 	}
 }
 
-VectorX Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
-{
-	VectorX p_j;
-
-	AttachmentConstraint* ac;
-	if (ac = dynamic_cast<AttachmentConstraint*>(c)) // is attachment constraint
-	{
-		EigenVector3 p0;
-		p0 = ac->GetFixedPoint();
-		p_j.resize(3);
-		p_j.block_vector(0) = p0;
-	}
-
-	SpringConstraint *sc;
-	if (sc = dynamic_cast<SpringConstraint*>(c)) // is spring constraint
-	{
-		EigenVector3 current_position_p1 = q.block_vector(sc->GetConstrainedVertexIndex1());
-		EigenVector3 current_position_p2 = q.block_vector(sc->GetConstrainedVertexIndex2());
-		EigenVector3 current_vector = current_position_p1 - current_position_p2;
-		ScalarType current_stretch = current_vector.norm() - sc->GetRestLength();
-		current_vector = current_vector.normalized();
-		EigenVector3 p1 = current_position_p1 - (current_stretch/2.0) * current_vector;
-		EigenVector3 p2 = current_position_p2 + (current_stretch/2.0) * current_vector;
-
-		p_j.resize(6);
-		p_j.block_vector(0) = p1;
-		p_j.block_vector(1) = p2;
-	}
-	
-	TetConstraint *tc;
-	if (tc = dynamic_cast<TetConstraint*>(c)) // is tetrahedral constraint
-	{
-		//TODO: all of this
-	}
-	
-	return p_j;
-}
-
 SparseMatrix Simulation::CreateSMatrix(Constraint* c)
 {
 	SparseMatrix S;
