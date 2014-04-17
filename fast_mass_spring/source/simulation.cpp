@@ -382,10 +382,6 @@ Simulation::SumRHSMatrix(VectorX b, std::vector<VectorX> p_vec)
 
 void Simulation::Update()
 {
-	// timers
-	simpleTimer t1, t2, t3;
-	t1.start(); // "entire update" start
-
 	// update inertia term
 	calculateInertiaY();
 
@@ -443,9 +439,6 @@ void Simulation::Update()
 				}
 			}
 
-			for (int j = 0; j < p_vec.size(); j++)
-				if (p_vec[j].rows() == 0) std::cout << "p_vec[" << j << "] is empty!" << std::endl;
-
 			/*
 			int index = 0;
 			for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
@@ -478,12 +471,6 @@ void Simulation::Update()
 
 	// update velocity and damp
 	dampVelocity();
-
-	// timers
-	t1.stop( "entire update" );
-
-	// debug
-	std::cin.ignore();
 }
 
 void Simulation::DrawConstraints(const VBO& vbos)
