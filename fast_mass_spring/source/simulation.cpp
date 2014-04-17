@@ -384,6 +384,7 @@ void Simulation::Update()
 
 			omp_set_num_threads(m_constraints.size());
 			int num_parallel_loops = ceil( m_constraints.size() / (float) omp_get_max_threads() );
+			std::cout << omp_get_max_threads() << std::endl;
 			
 			for (int j = 0; j < num_parallel_loops; j++)
 			{
