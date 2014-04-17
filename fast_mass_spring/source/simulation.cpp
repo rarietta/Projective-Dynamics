@@ -382,20 +382,51 @@ void Simulation::Update()
 			Constraint* c_j;
 			unsigned int tn;
 
-			int num_parallel_loops = ceil( m_constraints.size() / 64.0f );
 			omp_set_num_threads(m_constraints.size());
+			int num_parallel_loops = ceil( m_constraints.size() / (float) omp_get_max_threads() );
 			
 			for (int j = 0; j < num_parallel_loops; j++)
 			{
 				#pragma omp parallel default(shared) private(c_j, p_j, tn)
 				{
-					tn = omp_get_thread_num() + j*64;
+					tn = omp_get_thread_num() + j*omp_get_max_threads();
 					if (tn < m_constraints.size())
 					{
 						#pragma omp critical
 						{
 							c_j = m_constraints[tn];
-							p_j = ProjectOnConstraintSet(c_j, q_n1);
+
+							AttachmentConstraint* ac;
+							if (ac = dynamic_cast<AttachmentConstraint*>(c_j)) // is attachment constraint
+							{
+								EigenVector3 p0;
+								p0 = ac->GetFixedPoint();
+								p_j.resize(3);
+								p_j.block_vector(0) = p0;
+							}
+
+							SpringConstraint *sc;
+							if (sc = dynamic_cast<SpringConstraint*>(c_j)) // is spring constraint
+							{
+								EigenVector3 current_position_p1 = q_n1.block_vector(sc->GetConstrainedVertexIndex1());
+								EigenVector3 current_position_p2 = q_n1.block_vector(sc->GetConstrainedVertexIndex2());
+								EigenVector3 current_vector = current_position_p1 - current_position_p2;
+								ScalarType current_stretch = current_vector.norm() - sc->GetRestLength();
+								current_vector = current_vector.normalized();
+								EigenVector3 p1 = current_position_p1 - (current_stretch/2.0) * current_vector;
+								EigenVector3 p2 = current_position_p2 + (current_stretch/2.0) * current_vector;
+
+								p_j.resize(6);
+								p_j.block_vector(0) = p1;
+								p_j.block_vector(1) = p2;
+							}
+	
+							TetConstraint *tc;
+							if (tc = dynamic_cast<TetConstraint*>(c_j)) // is tetrahedral constraint
+							{
+								//TODO: all of this
+							}
+
 							c_j->m_RHS.applyThisOnTheLeft(p_j);
 							b += p_j;
 						}
