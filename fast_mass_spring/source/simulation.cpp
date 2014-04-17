@@ -127,8 +127,6 @@ Simulation::Simulation()
 
 	m_B_tet.resize(12,12);
 	m_B_tet = m_A_tet;
-
-	m_integration_method = INTEGRATION_LOCAL_GLOBAL;
 }
 
 Simulation::~Simulation()
@@ -177,44 +175,14 @@ void Simulation::UpdateAnimation(const int fn)
 	}
 }
 
-VectorX Simulation::ProjectOnConstraintSet(Constraint* c, VectorX q)
-{
-	VectorX p_j;
 
-	AttachmentConstraint* ac;
-	if (ac = dynamic_cast<AttachmentConstraint*>(c)) // is attachment constraint
-	{
-		EigenVector3 p0;
-		p0 = ac->GetFixedPoint();
-		p_j.resize(3);
-		p_j.block_vector(0) = p0;
-	}
 
-	SpringConstraint *sc;
-	if (sc = dynamic_cast<SpringConstraint*>(c)) // is spring constraint
-	{
-		EigenVector3 current_position_p1 = q.block_vector(sc->GetConstrainedVertexIndex1());
-		EigenVector3 current_position_p2 = q.block_vector(sc->GetConstrainedVertexIndex2());
-		EigenVector3 current_vector = current_position_p1 - current_position_p2;
-		ScalarType current_stretch = current_vector.norm() - sc->GetRestLength();
-		current_vector = current_vector.normalized();
-		EigenVector3 p1 = current_position_p1 - (current_stretch/2.0) * current_vector;
-		EigenVector3 p2 = current_position_p2 + (current_stretch/2.0) * current_vector;
+/*********** START - 563 final project primary contribution ***********/
 
-		p_j.resize(6);
-		p_j.block_vector(0) = p1;
-		p_j.block_vector(1) = p2;
-	}
-	
-	TetConstraint *tc;
-	if (tc = dynamic_cast<TetConstraint*>(c)) // is tetrahedral constraint
-	{
-		//TODO: all of this
-	}
-	
-	return p_j;
-}
 
+////////////////////////////////////////////////////
+// CreateSMatrix()
+////////////////////////////////////////////////////
 SparseMatrix Simulation::CreateSMatrix(Constraint* c)
 {
 	SparseMatrix S;
@@ -258,6 +226,10 @@ SparseMatrix Simulation::CreateSMatrix(Constraint* c)
 	return S;
 }
 
+
+////////////////////////////////////////////////////
+// CreateLHSMatrix()
+////////////////////////////////////////////////////
 void Simulation::CreateLHSMatrix()
 {
 	SparseMatrix M;
@@ -303,6 +275,10 @@ void Simulation::CreateLHSMatrix()
 	m_llt.compute(M);
 }
 
+
+////////////////////////////////////////////////////
+// CreateRHSMatrix()
+////////////////////////////////////////////////////
 void Simulation::CreateRHSMatrix()
 {
 	for (int i = 0; i < m_constraints.size(); i++)
@@ -341,6 +317,10 @@ void Simulation::CreateRHSMatrix()
 	}
 }
 
+
+////////////////////////////////////////////////////
+// Update()
+////////////////////////////////////////////////////
 void Simulation::Update()
 {
 	// update inertia term
@@ -350,105 +330,94 @@ void Simulation::Update()
 	calculateExternalForce();
 
 	// update cloth
-	switch (m_integration_method)
-	{
-	case INTEGRATION_EXPLICIT_EULER:
-		//TODO
-		break;
-	case INTEGRATION_EXPLICIT_SYMPLECTIC:
-		//TODO
-		break;
-	case INTEGRATION_IMPLICIT_EULER_BARAFF_WITKIN:
-		//TODO
-		break;
-	case INTEGRATION_GRADIENT_DESCENT:
-	case INTEGRATION_NEWTON_DESCENT:
-	case INTEGRATION_NEWTON_DESCENT_PCG:
-	case INTEGRATION_LOCAL_GLOBAL:
-	//TODO 
-	{
-		VectorX q_n = m_mesh->m_current_positions;
-		VectorX s_n = m_inertia_y + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
-		SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
-		
-		// LOCAL SOLVE STEP
-		VectorX q_n1 = s_n;
-		for (int i = 0; i < m_iterations_per_frame; i++)
+	switch ( m_integration_method ) {
+		case INTEGRATION_EXPLICIT_EULER:				// TODO
+		case INTEGRATION_EXPLICIT_SYMPLECTIC:			// TODO
+		case INTEGRATION_IMPLICIT_EULER_BARAFF_WITKIN:	// TODO
+		case INTEGRATION_GRADIENT_DESCENT:				// TODO
+		case INTEGRATION_NEWTON_DESCENT:				// TODO
+		case INTEGRATION_NEWTON_DESCENT_PCG:			// TODO
+		case INTEGRATION_PBD:							// TODO
+		case INTEGRATION_LOCAL_GLOBAL:					// DONE
 		{
-			VectorX b = s_n;
-			coeff.applyThisOnTheLeft(b);
-
-			VectorX p_j;
-			Constraint* c_j;
-			unsigned int tn;
-
-			omp_set_num_threads(m_constraints.size());
-			int num_parallel_loops = ceil( m_constraints.size() / (float) omp_get_max_threads() );
-			std::cout << omp_get_max_threads() << std::endl;
-			
-			for (int j = 0; j < num_parallel_loops; j++)
+			VectorX q_n = m_mesh->m_current_positions;
+			VectorX s_n = m_inertia_y + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
+			SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
+		
+			// LOCAL SOLVE STEP
+			VectorX q_n1 = s_n;
+			for (int i = 0; i < m_iterations_per_frame; i++)
 			{
-				#pragma omp parallel default(shared) private(c_j, p_j, tn)
+				VectorX b = s_n;
+				coeff.applyThisOnTheLeft(b);
+
+				VectorX p_j;
+				Constraint* c_j;
+				unsigned int tn;
+
+				omp_set_num_threads(m_constraints.size());
+				int num_parallel_loops = ceil( m_constraints.size() / (float) omp_get_max_threads() );
+				std::cout << omp_get_max_threads() << std::endl;
+
+				for (int j = 0; j < num_parallel_loops; j++)
 				{
-					tn = omp_get_thread_num() + j*omp_get_max_threads();
-					if (tn < m_constraints.size())
+					#pragma omp parallel default(shared) private(c_j, p_j, tn)
 					{
-						#pragma omp critical
+						tn = omp_get_thread_num() + j*omp_get_max_threads();
+						if (tn < m_constraints.size())
 						{
-							c_j = m_constraints[tn];
-
-							AttachmentConstraint* ac;
-							if (ac = dynamic_cast<AttachmentConstraint*>(c_j)) // is attachment constraint
+							#pragma omp critical
 							{
-								EigenVector3 p0;
-								p0 = ac->GetFixedPoint();
-								p_j.resize(3);
-								p_j.block_vector(0) = p0;
-							}
+								c_j = m_constraints[tn];
 
-							SpringConstraint *sc;
-							if (sc = dynamic_cast<SpringConstraint*>(c_j)) // is spring constraint
-							{
-								EigenVector3 current_position_p1 = q_n1.block_vector(sc->GetConstrainedVertexIndex1());
-								EigenVector3 current_position_p2 = q_n1.block_vector(sc->GetConstrainedVertexIndex2());
-								EigenVector3 current_vector = current_position_p1 - current_position_p2;
-								ScalarType current_stretch = current_vector.norm() - sc->GetRestLength();
-								current_vector = current_vector.normalized();
-								EigenVector3 p1 = current_position_p1 - (current_stretch/2.0) * current_vector;
-								EigenVector3 p2 = current_position_p2 + (current_stretch/2.0) * current_vector;
+								AttachmentConstraint* ac;
+								if (ac = dynamic_cast<AttachmentConstraint*>(c_j)) // is attachment constraint
+								{
+									EigenVector3 p0;
+									p0 = ac->GetFixedPoint();
+									p_j.resize(3);
+									p_j.block_vector(0) = p0;
+								}
 
-								p_j.resize(6);
-								p_j.block_vector(0) = p1;
-								p_j.block_vector(1) = p2;
-							}
+								SpringConstraint *sc;
+								if (sc = dynamic_cast<SpringConstraint*>(c_j)) // is spring constraint
+								{
+									EigenVector3 current_position_p1 = q_n1.block_vector(sc->GetConstrainedVertexIndex1());
+									EigenVector3 current_position_p2 = q_n1.block_vector(sc->GetConstrainedVertexIndex2());
+									EigenVector3 current_vector = current_position_p1 - current_position_p2;
+									ScalarType current_stretch = current_vector.norm() - sc->GetRestLength();
+									current_vector = current_vector.normalized();
+									EigenVector3 p1 = current_position_p1 - (current_stretch/2.0) * current_vector;
+									EigenVector3 p2 = current_position_p2 + (current_stretch/2.0) * current_vector;
+
+									p_j.resize(6);
+									p_j.block_vector(0) = p1;
+									p_j.block_vector(1) = p2;
+								}
 	
-							TetConstraint *tc;
-							if (tc = dynamic_cast<TetConstraint*>(c_j)) // is tetrahedral constraint
-							{
-								//TODO: all of this
-							}
+								TetConstraint *tc;
+								if (tc = dynamic_cast<TetConstraint*>(c_j)) // is tetrahedral constraint
+								{
+									//TODO: all of this
+								}
 
-							c_j->m_RHS.applyThisOnTheLeft(p_j);
-							b += p_j;
+								c_j->m_RHS.applyThisOnTheLeft(p_j);
+								b += p_j;
+							}
 						}
 					}
 				}
-			}
 			
-			// GLOBAL SOLVE STEP
-			q_n1 = m_llt.solve(b);
-		}
+				// GLOBAL SOLVE STEP
+				q_n1 = m_llt.solve(b);
+			}
 
-		VectorX v_n1 = (q_n1 - q_n)/m_h;
-		m_mesh->m_current_positions = q_n1;
-		m_mesh->m_current_velocities = v_n1;
+			VectorX v_n1 = (q_n1 - q_n)/m_h;
+			m_mesh->m_current_positions = q_n1;
+			m_mesh->m_current_velocities = v_n1;
 		
-		break;
-	}
-
-	case INTEGRATION_PBD:
-		//TODO
-		break;
+			break;
+		}
 	}
 
 	// Add collision detection here using pos_next;
@@ -458,6 +427,7 @@ void Simulation::Update()
 	// update velocity and damp
 	dampVelocity();
 }
+
 
 void Simulation::DrawConstraints(const VBO& vbos)
 {

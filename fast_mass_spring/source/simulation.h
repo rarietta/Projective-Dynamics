@@ -82,7 +82,6 @@ public:
 	void CreateLHSMatrix(void);
 	void CreateRHSMatrix(void);
 	SparseMatrix CreateSMatrix(Constraint* c);
-	VectorX ProjectOnConstraintSet(Constraint* c, VectorX q);
 
 	// select/unselect/move/save/load attachment constratins
 	ScalarType TryToSelectAttachmentConstraint(const EigenVector3& p0, const EigenVector3& dir); // return ray_projection_plane_distance if hit; return -1 otherwise.
