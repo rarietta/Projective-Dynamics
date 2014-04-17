@@ -361,22 +361,8 @@ Simulation::CreateRHSMatrix()
 VectorX
 Simulation::SumRHSMatrix(VectorX b, std::vector<VectorX> p_vec)
 {
-	int index = 0;
-	for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
-	{
-		VectorX p_i_local = p_vec[index++];
-		AttachmentConstraint* ac;
-		if (ac = dynamic_cast<AttachmentConstraint*>(*c))	// is attachment constraint
-			ac->m_RHS.applyThisOnTheLeft(p_i_local);
-		SpringConstraint* sc;
-		if (sc = dynamic_cast<SpringConstraint*>(*c))		// is spring constraint		
-			sc->m_RHS.applyThisOnTheLeft(p_i_local);
-		TetConstraint* tc;
-		if (tc = dynamic_cast<TetConstraint*>(*c))			// is tetrahedral constraint
-			tc->m_RHS.applyThisOnTheLeft(p_i_local);
-
-		b += (p_i_local);
-	}	
+	for (int i = 0; i < p_vec.size(); i++)
+		b += p_vec[i];
 	return b;
 }
 
@@ -417,40 +403,34 @@ void Simulation::Update()
 		for (int i = 0; i < m_iterations_per_frame; i++)
 		{
 			VectorX p_j;
-			Constraint* c;
+			Constraint* c_j;
 			unsigned int tn;
 			int num_parallel_loops = ceil( m_constraints.size() / 64.0f );
 			omp_set_num_threads(m_constraints.size());
 
 			for (int j = 0; j < num_parallel_loops; j++)
 			{
-				#pragma omp parallel default(shared) private(c, p_j, tn)
+				#pragma omp parallel default(shared) private(c_j, p_j, tn)
 				{
 					#pragma omp critical
 					{
 						tn = omp_get_thread_num() + j*64;
 						if (tn < m_constraints.size())
 						{
-							c = m_constraints[tn];
-							p_j = ProjectOnConstraintSet(c, q_n1);
+							c_j = m_constraints[tn];
+							p_j = ProjectOnConstraintSet(c_j, q_n1);
+							c_j->m_RHS.applyThisOnTheLeft(p_j);
 							p_vec[tn] = p_j;
 						}
 					}
 				}
 			}
 
-			/*
-			int index = 0;
-			for (std::vector<Constraint*>::iterator c = m_constraints.begin(); c != m_constraints.end(); ++c)
-			{
-				VectorX p_j = ProjectOnConstraintSet(*c, q_n1);
-				p_vec[index++] = p_j;
-			}*/
-
 			VectorX b = s_n;
 			coeff.applyThisOnTheLeft(b);
-			VectorX p = SumRHSMatrix(b, p_vec);
-			q_n1 = m_llt.solve(p);
+			for (int i = 0; i < p_vec.size(); i++)
+				b += p_vec[i];
+			q_n1 = m_llt.solve(b);
 		}
 
 		VectorX v_n1 = (q_n1 - q_n)/m_h;

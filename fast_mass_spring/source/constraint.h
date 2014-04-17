@@ -52,6 +52,7 @@ public:
 	virtual void  EvaluateWeightedLaplacian(std::vector<SparseMatrixTriplet>& laplacian_triplets) {std::cout << "Warning: reach <Constraint::EvaluateWeightedLaplacian> base class virtual function." << std::endl;}
 	
 	inline const ScalarType& Stiffness() {return (*m_stiffness);}
+	SparseMatrix m_RHS;
 
 protected:
 	ScalarType *m_stiffness;
@@ -76,7 +77,7 @@ public:
 	virtual void  EvaluateGradient(const VectorX& x, VectorX& gradient);
 	virtual void  EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTriplet>& hessian_triplets);
 	virtual void  EvaluateWeightedLaplacian(std::vector<SparseMatrixTriplet>& laplacian_triplets);
-	SparseMatrix m_RHS;
+	//SparseMatrix m_RHS;
 
 protected:
 	unsigned int m_p0;
@@ -111,7 +112,7 @@ public:
 	virtual void  EvaluateGradient(const VectorX& x, VectorX& gradient);
 	virtual void  EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTriplet>& hessian_triplets);
 	virtual void  EvaluateWeightedLaplacian(std::vector<SparseMatrixTriplet>& laplacian_triplets);
-	SparseMatrix m_RHS;
+	//SparseMatrix m_RHS;
 
 protected:
 	unsigned int m_p1, m_p2;
@@ -136,7 +137,7 @@ public:
 	virtual ScalarType  EvaluatePotentialEnergy(const VectorX& x);
 	virtual void  EvaluateGradient(const VectorX& x, VectorX& gradient);
 	virtual void  EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTriplet>& hessian_triplets);
-	SparseMatrix m_RHS;
+	//SparseMatrix m_RHS;
 
 private:
 	void getDeformationGradient(EigenMatrix3& F, const VectorX& x);
