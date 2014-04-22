@@ -757,13 +757,43 @@ VectorX Simulation::collisionDetection(const VectorX x)
 	EigenVector3 normal;
 	ScalarType dist;
 
+	EigenVector3 vn, vt, vel;
+
+	float friction = 0.98f;
+	float restitution = 0.4f;
+
+
 	for (unsigned int i = 0; i < m_mesh->m_vertices_number; ++i)
 	{
 		EigenVector3 xi = x.block_vector(i);
 
 		if (m_scene->StaticIntersectionTest(xi, normal, dist))
 		{
-			penetration.block_vector(i) += (dist) * normal;
+			penetration.block_vector( i ) += ( dist ) * normal;
+
+
+			// TODO: update velocity
+
+			vel = m_mesh->m_current_velocities.block_vector( i );
+
+			// compute component of velocity parallel to normal at collision surface point
+			// glm::dot( vel, normal ) = signed length of projection of vel onto any line parallel to normal
+			// divide by glm::dot( normal, normal ) to remove any scaling caused by normal's magnitude
+			// multiply by normal to convert previously computed scalar into a vector with direction parallel to normal
+			vn = vel.dot( normal ) / normal.dot( normal ) * normal;
+
+			// compute component of velocity perpendicular to normal at collision surface point
+			vt = vel - vn;
+
+			// damp velocity components
+			vn = vn * restitution;
+			vt = vt * friction;
+
+			// reflect velocity component parallel to collision normal
+			vn = vn * -1.0f;
+
+			// set particle velocity to dampened velocity
+			m_mesh->m_current_velocities.block_vector( i ) = vn + vt;
 		}
 	}
 

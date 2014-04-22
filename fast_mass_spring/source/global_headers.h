@@ -66,7 +66,10 @@
 // file localtions
 #define DEFAULT_VERT_SHADER_FILE "./shaders/vert.glsl"
 #define DEFAULT_FRAG_SHADER_FILE "./shaders/frag.glsl"
-#define DEFAULT_SCENE_FILE "./scenes/test_scene.xml"
+
+//#define DEFAULT_SCENE_FILE "./scenes/test_scene.xml"
+#define DEFAULT_SCENE_FILE "./scenes/single_sphere.xml"
+
 #define DEFAULT_CONFIG_FILE "./config/config.txt"
 #define DEFAULT_CONFIG_OBJ_FILE "./config/mesh.obj"
 #define DEFAULT_CONFIG_HANDLE_FILE "./config/handle.obj"
