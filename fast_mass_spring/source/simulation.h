@@ -160,6 +160,9 @@ protected:
 	SparseMatrix m_B_spring;
 	SparseMatrix m_B_tet;
 
+	VectorX p_attach;
+	VectorX p_spring;
+
 private:
 
 	// main update sub-routines
