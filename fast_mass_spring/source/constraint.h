@@ -39,6 +39,8 @@
 #include "opengl_headers.h"
 #include "primitive.h"
 
+enum {ATTACHMENT, SPRING, TET};
+
 class Constraint
 {
 public:
@@ -53,6 +55,7 @@ public:
 	
 	inline const ScalarType& Stiffness() {return (*m_stiffness);}
 	SparseMatrix m_RHS;
+	int constraintType;
 
 protected:
 	ScalarType *m_stiffness;

@@ -29,8 +29,8 @@ LSEnable            1
 LSStep              1
 LSAlpha             0.25
 LSBeta              0.1
-AnimEnableSwing     0
-AnimSwingAll        0
-AnimHalfPeriod      30
-AnimAmp             2
+AnimEnableSwing     1
+AnimSwingAll        1
+AnimHalfPeriod      54
+AnimAmp             4
 AnimDir             0 1 0

@@ -60,6 +60,7 @@ AttachmentConstraint::AttachmentConstraint(ScalarType *stiffness) :
 	Constraint(stiffness)
 {
 	m_selected = false;
+	constraintType = ATTACHMENT;
 }
 
 AttachmentConstraint::AttachmentConstraint(ScalarType *stiffness, unsigned int p0, const EigenVector3& fixedpoint) : 
@@ -68,6 +69,7 @@ AttachmentConstraint::AttachmentConstraint(ScalarType *stiffness, unsigned int p
 	m_fixd_point(fixedpoint)
 {
 	m_selected = false;
+	constraintType = ATTACHMENT;
 }
 
 AttachmentConstraint::AttachmentConstraint(const AttachmentConstraint& other) : 
@@ -76,7 +78,7 @@ AttachmentConstraint::AttachmentConstraint(const AttachmentConstraint& other) :
 	m_fixd_point(other.m_fixd_point),
 	m_selected(other.m_selected)
 {
-	
+	constraintType = ATTACHMENT;
 }
 
 AttachmentConstraint::~AttachmentConstraint()
@@ -156,6 +158,7 @@ void AttachmentConstraint::WriteToFileOBJHead(std::ofstream& outfile)
 SpringConstraint::SpringConstraint(ScalarType *stiffness) : 
 	Constraint(stiffness)
 {
+	constraintType = SPRING;
 }
 
 SpringConstraint::SpringConstraint(ScalarType *stiffness, unsigned int p1, unsigned int p2, ScalarType length) : 
@@ -164,6 +167,7 @@ SpringConstraint::SpringConstraint(ScalarType *stiffness, unsigned int p1, unsig
 	m_p2(p2),
 	m_rest_length(length)
 {
+	constraintType = SPRING;
 }
 
 SpringConstraint::SpringConstraint(const SpringConstraint& other) : 
@@ -172,6 +176,7 @@ SpringConstraint::SpringConstraint(const SpringConstraint& other) :
 	m_p2(other.m_p2),
 	m_rest_length(other.m_rest_length)
 {
+	constraintType = SPRING;
 }
 
 SpringConstraint::~SpringConstraint()
@@ -210,6 +215,7 @@ void SpringConstraint::EvaluateWeightedLaplacian(std::vector<SparseMatrixTriplet
 TetConstraint::TetConstraint(ScalarType *stiffness) : 
 	Constraint(stiffness)
 {
+	constraintType = TET;
 }
 
 TetConstraint::TetConstraint(ScalarType *stiffness, unsigned int p1, unsigned int p2, unsigned int p3, unsigned int p4, VectorX& x) : 
@@ -239,6 +245,7 @@ TetConstraint::TetConstraint(ScalarType *stiffness, unsigned int p1, unsigned in
 	m_Q = m_Dr_inv.transpose() * IND;
 
 	m_Q_kron_I33.resize(9, 12);
+	constraintType = TET;
 }
 
 TetConstraint::TetConstraint(const TetConstraint& other) : 
@@ -256,6 +263,7 @@ TetConstraint::TetConstraint(const TetConstraint& other) :
 	m_Q = other.m_Q;
 
 	m_Q_kron_I33 = other.m_Q_kron_I33;
+	constraintType = TET;
 }
 
 TetConstraint::~TetConstraint()
