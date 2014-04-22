@@ -342,63 +342,70 @@ void Simulation::Update()
 		case INTEGRATION_PBD:							// TODO
 		case INTEGRATION_LOCAL_GLOBAL:					// DONE
 		{
+			omp_set_num_threads(m_constraints.size());
+			
+			AttachmentConstraint* ac;
+			SpringConstraint *sc;
+			TetConstraint *tc;
+					
+			VectorX* p_j;
+			Constraint* c_j;
+			unsigned int tn;
+			
 			VectorX q_n = m_mesh->m_current_positions;
 			VectorX s_n = m_inertia_y + (m_h*m_h)*(m_mesh->m_inv_mass_matrix)*m_external_force;
-			SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
-		
-			// LOCAL SOLVE STEP
 			VectorX q_n1 = s_n;
+
+			SparseMatrix coeff = m_mesh->m_mass_matrix / (m_h * m_h);
+			coeff.applyThisOnTheLeft(s_n);
+			
+			// LOCAL SOLVE STEP
 			for (int i = 0; i < m_iterations_per_frame; i++)
 			{
 				simpleTimer localTimer;
 				localTimer.start();
 
 				VectorX b = s_n;
-				coeff.applyThisOnTheLeft(b);
 
-				VectorX* p_j;
-				Constraint* c_j;
-				unsigned int tn;
+				EigenVector3 current_vector;
+				ScalarType current_stretch;
+				int constraintType;
 
-				omp_set_num_threads(m_constraints.size());
 				int num_parallel_loops = ceil( m_constraints.size() / (float) omp_get_max_threads() );
-
 				for (int j = 0; j < num_parallel_loops; j++)
 				{
-					#pragma omp parallel default(shared) private(c_j, p_j, tn)
+					#pragma omp parallel default(shared) private(c_j, p_j, tn, sc, ac, tc, current_stretch, current_vector)
 					{
 						tn = omp_get_thread_num() + j*omp_get_max_threads();
 						if (tn < m_constraints.size())
 						{
+							c_j = m_constraints[tn];
+							constraintType = c_j->constraintType;
+
 							#pragma omp critical
 							{
-								c_j = m_constraints[tn];
-
-								AttachmentConstraint* ac;
-								SpringConstraint *sc;
-								TetConstraint *tc;
-								
-								if (sc = dynamic_cast<SpringConstraint*>(c_j)) // is spring constraint
+								if (constraintType == SPRING) // is spring constraint
 								{
-									EigenVector3 current_position_p1 = q_n1.block_vector(sc->GetConstrainedVertexIndex1());
-									EigenVector3 current_position_p2 = q_n1.block_vector(sc->GetConstrainedVertexIndex2());
-									EigenVector3 current_vector = current_position_p1 - current_position_p2;
-									ScalarType current_stretch = current_vector.norm() - sc->GetRestLength();
-									current_vector = current_vector.normalized();
+									sc = (SpringConstraint *) c_j;
+									current_vector = q_n1.block_vector(sc->GetConstrainedVertexIndex1()) - q_n1.block_vector(sc->GetConstrainedVertexIndex2());
+									current_stretch = current_vector.norm() - sc->GetRestLength();
+									current_vector = (current_stretch / 2.0) * current_vector.normalized();
 
 									p_j = &p_spring;
-									p_j->block_vector(0) = current_position_p1 - (current_stretch/2.0) * current_vector;
-									p_j->block_vector(1) = current_position_p2 + (current_stretch/2.0) * current_vector;
+									p_j->block_vector(0) = q_n1.block_vector(sc->GetConstrainedVertexIndex1()) - current_vector;
+									p_j->block_vector(1) = q_n1.block_vector(sc->GetConstrainedVertexIndex2()) + current_vector;
 								}
 	
-								else if (ac = dynamic_cast<AttachmentConstraint*>(c_j)) // is attachment constraint
+								else if (constraintType == ATTACHMENT) // is attachment constraint
 								{
+									ac = (AttachmentConstraint *) c_j;
 									p_j = &p_attach;
 									p_j->block_vector(0) = ac->GetFixedPoint();
 								}
 
-								else if (tc = dynamic_cast<TetConstraint*>(c_j)) // is tetrahedral constraint
+								else if (constraintType == TET) // is tetrahedral constraint
 								{
+									tc = (TetConstraint *) c_j;
 									//TODO: all of this
 								}
 
@@ -412,10 +419,7 @@ void Simulation::Update()
 				localTimer.stop("Local");
 			
 				// GLOBAL SOLVE STEP
-				simpleTimer globalTimer;
-				globalTimer.start();
 				q_n1 = m_llt.solve(b);
-				globalTimer.stop("Global");
 			}
 
 			VectorX v_n1 = (q_n1 - q_n)/m_h;
