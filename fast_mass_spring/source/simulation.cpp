@@ -380,14 +380,15 @@ void Simulation::Update()
 								
 								if (sc = dynamic_cast<SpringConstraint*>(c_j)) // is spring constraint
 								{
-									EigenVector3 current_vector = q_n1.block_vector(sc->GetConstrainedVertexIndex1())
-																- q_n1.block_vector(sc->GetConstrainedVertexIndex2());
+									EigenVector3 current_position_p1 = q_n1.block_vector(sc->GetConstrainedVertexIndex1());
+									EigenVector3 current_position_p2 = q_n1.block_vector(sc->GetConstrainedVertexIndex2());
+									EigenVector3 current_vector = current_position_p1 - current_position_p2;
 									ScalarType current_stretch = current_vector.norm() - sc->GetRestLength();
 									current_vector = current_vector.normalized();
 
 									p_j = &p_spring;
-									p_j->block_vector(0) -= (current_stretch/2.0) * current_vector;
-									p_j->block_vector(1) += (current_stretch/2.0) * current_vector;
+									p_j->block_vector(0) = current_position_p1 - (current_stretch/2.0) * current_vector;
+									p_j->block_vector(1) = current_position_p2 + (current_stretch/2.0) * current_vector;
 								}
 	
 								else if (ac = dynamic_cast<AttachmentConstraint*>(c_j)) // is attachment constraint
@@ -529,6 +530,8 @@ bool Simulation::TryToToggleAttachmentConstraint(const EigenVector3& p0, const E
 				delete ac;
 				m_mesh->m_expanded_system_dimension-=3;
 				m_mesh->m_expanded_system_dimension_1d-=1;
+				CreateLHSMatrix();
+				CreateRHSMatrix();
 				break;
 			}
 		}

@@ -12,7 +12,7 @@ MeshMass            1
 TetFilePath         ./mesh_models/cube86.mesh
 TetScaling          1
 TetFlip             0
-ClothDimension      40 40
+ClothDimension      20 20
 ClothCorners        -5 8 -5 5 -1.85 -3.26
 
 SimMethod           1
