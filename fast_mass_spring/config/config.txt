@@ -4,19 +4,19 @@ MeshBody            1
 Wireframe           0
 Wireframe           1
 Texture             1
-ScreenWidth         1024
-ScreenHeight        768
+ScreenWidth         1280
+ScreenHeight        657
 
 MeshType            0
 MeshMass            1
 TetFilePath         ./mesh_models/cube86.mesh
 TetScaling          1
 TetFlip             0
-ClothDimension      20 20
-ClothCorners        -5 8 -5 5 -1.85 -3.26
+ClothDimension      18 18
+ClothCorners        -5 8 -5 5 8 5
 
 SimMethod           1
-Timestep            0.0333
+Timestep            0.01
 QuasiStatics        0
 Subspace            1
 AttachmentStiffness 75
@@ -29,7 +29,7 @@ LSEnable            1
 LSStep              1
 LSAlpha             0.25
 LSBeta              0.1
-AnimEnableSwing     1
+AnimEnableSwing     0
 AnimSwingAll        1
 AnimHalfPeriod      54
 AnimAmp             4

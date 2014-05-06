@@ -117,6 +117,7 @@ protected:
 	ScalarType m_stiffness_bending;
 	ScalarType m_damping_coefficient;
 	Eigen::LLT<Matrix> m_llt;
+	std::vector<bool> isColliding;
 
 	// integration method
 	IntegrationMethod m_integration_method;

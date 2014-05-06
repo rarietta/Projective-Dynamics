@@ -149,6 +149,9 @@ void Simulation::Reset()
 	p_spring.resize(6);
 	SetReprefactorFlag();
 
+	for (int i = 0; i < m_mesh->m_vertices_number; i++)
+		isColliding.push_back(false);
+
 	m_selected_attachment_constraint = NULL;
 	m_step_mode = false;
 }
@@ -176,8 +179,6 @@ void Simulation::UpdateAnimation(const int fn)
 		}
 	}
 }
-
-
 
 /*********** START - 563 final project primary contribution ***********/
 
@@ -323,6 +324,7 @@ void Simulation::CreateRHSMatrix()
 ////////////////////////////////////////////////////
 // Update()
 ////////////////////////////////////////////////////
+
 void Simulation::Update()
 {
 	// update inertia term
@@ -330,7 +332,7 @@ void Simulation::Update()
 
 	// update external force
 	calculateExternalForce();
-
+	
 	// update cloth
 	switch ( m_integration_method ) {
 		case INTEGRATION_EXPLICIT_EULER:				// TODO
@@ -390,12 +392,12 @@ void Simulation::Update()
 									current_vector = q_n1.block_vector(sc->GetConstrainedVertexIndex1()) - q_n1.block_vector(sc->GetConstrainedVertexIndex2());
 									current_stretch = current_vector.norm() - sc->GetRestLength();
 									current_vector = (current_stretch / 2.0) * current_vector.normalized();
-
+									
 									p_j = &p_spring;
 									p_j->block_vector(0) = q_n1.block_vector(sc->GetConstrainedVertexIndex1()) - current_vector;
 									p_j->block_vector(1) = q_n1.block_vector(sc->GetConstrainedVertexIndex2()) + current_vector;
 								}
-	
+
 								else if (constraintType == ATTACHMENT) // is attachment constraint
 								{
 									ac = (AttachmentConstraint *) c_j;
@@ -429,7 +431,7 @@ void Simulation::Update()
 			break;
 		}
 	}
-
+	
 	// Add collision detection here using pos_next;
 	VectorX penetration = collisionDetection(m_mesh->m_current_positions);
 	m_mesh->m_current_positions -= penetration;
@@ -437,7 +439,6 @@ void Simulation::Update()
 	// update velocity and damp
 	dampVelocity();
 }
-
 
 void Simulation::DrawConstraints(const VBO& vbos)
 {
@@ -773,8 +774,9 @@ VectorX Simulation::collisionDetection(const VectorX x)
 
 		if (m_scene->StaticIntersectionTest(xi, normal, dist))
 		{
-			penetration.block_vector( i ) += ( dist ) * normal;
+			penetration.block_vector( i ) +=  dist * normal;
 
+			isColliding[i] = true;
 
 			// TODO: update velocity
 
@@ -799,6 +801,8 @@ VectorX Simulation::collisionDetection(const VectorX x)
 			// set particle velocity to dampened velocity
 			m_mesh->m_current_velocities.block_vector( i ) = vn + vt;
 		}
+
+		else isColliding[i] = false;
 	}
 
 	return penetration;

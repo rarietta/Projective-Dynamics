@@ -31,7 +31,6 @@
 
 #include "primitive.h"
 
-#define COLLISION_EPSILON 1e-3
 
 bool lineTriangleIntersection(EigenVector3& A, EigenVector3& B, EigenVector3& C, EigenVector3& n, EigenVector3& P, EigenVector3& dir, ScalarType& t)
 {

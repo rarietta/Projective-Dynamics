@@ -34,6 +34,8 @@
 #include "math_headers.h"
 #include "opengl_headers.h"
 
+#define COLLISION_EPSILON 1e-1
+
 // TODO: add more primitives here.
 enum PrimitiveType {PLANE, SPHERE, CUBE, OBJMESH};
 class Primitive
