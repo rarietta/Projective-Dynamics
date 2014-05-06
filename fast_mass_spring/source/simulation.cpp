@@ -410,17 +410,20 @@ void Simulation::Update()
 								{
 									tc = ( TetConstraint* )c_j;
 
-									VectorX tet_verts_old;
-									tet_verts_old.resize( 12 );
-									tet_verts_old.block_vector( 0 ) = q_n1.block_vector(tc->GetConstrainedVertexIndex1());
-									tet_verts_old.block_vector( 1 ) = q_n1.block_vector(tc->GetConstrainedVertexIndex2());
-									tet_verts_old.block_vector( 2 ) = q_n1.block_vector(tc->GetConstrainedVertexIndex3());
-									tet_verts_old.block_vector( 3 ) = q_n1.block_vector(tc->GetConstrainedVertexIndex4());
+									// build VectorX with deformed tetrahedron's current vertex positions
+									VectorX tet_verts_current;
+									tet_verts_current.resize( 12 );
+									tet_verts_current.block_vector( 0 ) = q_n1.block_vector( tc->GetConstrainedVertexIndex1() );
+									tet_verts_current.block_vector( 1 ) = q_n1.block_vector( tc->GetConstrainedVertexIndex2() );
+									tet_verts_current.block_vector( 2 ) = q_n1.block_vector( tc->GetConstrainedVertexIndex3() );
+									tet_verts_current.block_vector( 3 ) = q_n1.block_vector( tc->GetConstrainedVertexIndex4() );
 
+									// call computeVolumePreservingVertexPositions() to compute deformed tetrahedron's new vertex positions that preserve volume
 									VectorX tet_verts_new;
 									tet_verts_new.resize( 12 );
-									tc->computeVolumePreservingVertexPositions( tet_verts_new, tet_verts_old );
+									tc->computeVolumePreservingVertexPositions( tet_verts_new, tet_verts_current );
 
+									// set deformed tetrahedron's new vertex positions that preserve volume
 									p_j = &p_tet;
 									p_j->block_vector( 0 ) = tet_verts_new.block_vector( 0 );
 									p_j->block_vector( 1 ) = tet_verts_new.block_vector( 1 );

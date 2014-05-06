@@ -300,11 +300,11 @@ void TetConstraint::EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTr
 }
 
 // strain limiting volume preservation
-void TetConstraint::computeVolumePreservingVertexPositions( VectorX& after_verts, const VectorX& before_verts )
+void TetConstraint::computeVolumePreservingVertexPositions( VectorX& new_vertex_positions, const VectorX& current_vertex_positions )
 {
-	// compute deformation gradient, F, for current tetrahedron
+	// compute the deformation gradient, F, for the tetrahedron's current deformation
 	EigenMatrix3 F;
-	getDeformationGradient( F, before_verts );
+	getDeformationGradient( F, current_vertex_positions );
 
 	// run SVD to get U, S, and V from the deformation gradient
 	EigenMatrix3 U, V;
@@ -315,13 +315,13 @@ void TetConstraint::computeVolumePreservingVertexPositions( VectorX& after_verts
 	double min = 0.95;
 	double max = 1.05;
 	EigenMatrix3 SIGMA_new;
-	SIGMA_new << clamp( SIGMA(0, 0), min, max ), 0, 0,
-				 0, clamp( SIGMA(1, 0), min, max ), 0,
-				 0, 0, clamp( SIGMA(2, 0), min, max );
+	SIGMA_new << clamp( SIGMA( 0, 0 ), min, max ),	0.0,								0.0,
+				 0.0,								clamp( SIGMA( 1, 0 ), min, max ),	0.0,
+				 0.0,								0.0,								clamp( SIGMA( 2, 0 ), min, max );
 
 	// compute a new deformation gradient, F*, using the existing U and V rotation matrices along with S*
-	EigenMatrix3 F_new = V;
-	SIGMA_new.applyThisOnTheLeft( F_new.transpose() );
+	EigenMatrix3 F_new = V.transpose();
+	SIGMA_new.applyThisOnTheLeft( F_new );
 	U.applyThisOnTheLeft( F_new );
 
 	// compute deformed basis matrix from F* and rest state basis matrix
@@ -329,16 +329,16 @@ void TetConstraint::computeVolumePreservingVertexPositions( VectorX& after_verts
 	F_new.applyThisOnTheLeft( deformed_basis );
 
 	// use deformed basis matrix to compute new positions of the tetrahedron's vertices
-	EigenVector3 tet_centroid = ( before_verts.block_vector( 0 ) + before_verts.block_vector( 1 ) + before_verts.block_vector( 2 ) + before_verts.block_vector( 3 ) ) / 4.0;
-	after_verts.block_vector( 3 ) = ( tet_centroid - ( deformed_basis.col( 0 ) + deformed_basis.col( 1 ) ) ) / 4.0;
-	after_verts.block_vector( 0 ) = after_verts.block_vector( 3 ) + deformed_basis.col( 0 );
-	after_verts.block_vector( 1 ) = after_verts.block_vector( 3 ) + deformed_basis.col( 1 );
-	after_verts.block_vector( 2 ) = after_verts.block_vector( 3 ) + deformed_basis.col( 2 );
+	EigenVector3 tet_centroid = ( current_vertex_positions.block_vector( 0 ) + current_vertex_positions.block_vector( 1 ) + current_vertex_positions.block_vector( 2 ) + current_vertex_positions.block_vector( 3 ) ) / 4.0;
+	new_vertex_positions.block_vector( 3 ) = tet_centroid - ( deformed_basis.col( 0 ) + deformed_basis.col( 1 ) + deformed_basis.col( 2 ) ) / 4.0;
+	new_vertex_positions.block_vector( 0 ) = new_vertex_positions.block_vector( 3 ) + deformed_basis.col( 0 );
+	new_vertex_positions.block_vector( 1 ) = new_vertex_positions.block_vector( 3 ) + deformed_basis.col( 1 );
+	new_vertex_positions.block_vector( 2 ) = new_vertex_positions.block_vector( 3 ) + deformed_basis.col( 2 );
 }
 
-double TetConstraint::clamp(double n, double lower, double upper)
+double TetConstraint::clamp( double n, double lower, double upper )
 {
-	return std::max(lower, std::min(n, upper));
+	return std::max( lower, std::min( n, upper ) );
 }
 
 void TetConstraint::calculateDPDF(EigenMatrix3 dPdF[][3], const EigenMatrix3& U, const EigenVector3& SIGMA, const EigenMatrix3& V)
@@ -350,10 +350,14 @@ void TetConstraint::getDeformationGradient(EigenMatrix3& F, const VectorX& x)
 {
 	// TODO
 	EigenVector3 x1, x2, x3, x4;
-	x1 = x.block_vector(m_p[0]);
-	x2 = x.block_vector(m_p[1]);
-	x3 = x.block_vector(m_p[2]);
-	x4 = x.block_vector(m_p[3]);
+	//x1 = x.block_vector(m_p[0]);
+	//x2 = x.block_vector(m_p[1]);
+	//x3 = x.block_vector(m_p[2]);
+	//x4 = x.block_vector(m_p[3]);
+	x1 = x.block_vector( 0 );
+	x2 = x.block_vector( 1 );
+	x3 = x.block_vector( 2 );
+	x4 = x.block_vector( 3 );
 
 	EigenMatrix3 Ds;
 	Ds(0,0) = x1.x() - x4.x();	Ds(0,1) = x2.x() - x4.x();	Ds(0,2) = x3.x() - x4.x();

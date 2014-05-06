@@ -142,7 +142,7 @@ public:
 	virtual void  EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTriplet>& hessian_triplets);
 	//SparseMatrix m_RHS;
 
-	virtual void computeVolumePreservingVertexPositions( VectorX& after_verts, const VectorX& before_verts );
+	virtual void computeVolumePreservingVertexPositions( VectorX& new_vertex_positions, const VectorX& current_vertex_positions );
 	inline unsigned int GetConstrainedVertexIndex1( void ) { return m_p[0]; }
 	inline unsigned int GetConstrainedVertexIndex2( void ) { return m_p[1]; }
 	inline unsigned int GetConstrainedVertexIndex3( void ) { return m_p[2]; }
