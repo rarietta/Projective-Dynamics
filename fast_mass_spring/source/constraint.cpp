@@ -299,6 +299,48 @@ void TetConstraint::EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTr
 	// TODO
 }
 
+// strain limiting volume preservation
+void TetConstraint::computeVolumePreservingVertexPositions( VectorX& after_verts, const VectorX& before_verts )
+{
+	// compute deformation gradient, F, for current tetrahedron
+	EigenMatrix3 F;
+	getDeformationGradient( F, before_verts );
+
+	// run SVD to get U, S, and V from the deformation gradient
+	EigenMatrix3 U, V;
+	EigenVector3 SIGMA;
+	singularValueDecomp( U, SIGMA, V, F );
+
+	// compute a new S, S*, by clamping the existing s values (stresses) on the main diagonal of S
+	double min = 0.95;
+	double max = 1.05;
+	EigenMatrix3 SIGMA_new;
+	SIGMA_new << clamp( SIGMA(0, 0), min, max ), 0, 0,
+				 0, clamp( SIGMA(1, 0), min, max ), 0,
+				 0, 0, clamp( SIGMA(2, 0), min, max );
+
+	// compute a new deformation gradient, F*, using the existing U and V rotation matrices along with S*
+	EigenMatrix3 F_new = V;
+	SIGMA_new.applyThisOnTheLeft( F_new.transpose() );
+	U.applyThisOnTheLeft( F_new );
+
+	// compute deformed basis matrix from F* and rest state basis matrix
+	EigenMatrix3 deformed_basis = m_Dr;
+	F_new.applyThisOnTheLeft( deformed_basis );
+
+	// use deformed basis matrix to compute new positions of the tetrahedron's vertices
+	EigenVector3 tet_centroid = ( before_verts.block_vector( 0 ) + before_verts.block_vector( 1 ) + before_verts.block_vector( 2 ) + before_verts.block_vector( 3 ) ) / 4.0;
+	after_verts.block_vector( 3 ) = ( tet_centroid - ( deformed_basis.col( 0 ) + deformed_basis.col( 1 ) ) ) / 4.0;
+	after_verts.block_vector( 0 ) = after_verts.block_vector( 3 ) + deformed_basis.col( 0 );
+	after_verts.block_vector( 1 ) = after_verts.block_vector( 3 ) + deformed_basis.col( 1 );
+	after_verts.block_vector( 2 ) = after_verts.block_vector( 3 ) + deformed_basis.col( 2 );
+}
+
+double TetConstraint::clamp(double n, double lower, double upper)
+{
+	return std::max(lower, std::min(n, upper));
+}
+
 void TetConstraint::calculateDPDF(EigenMatrix3 dPdF[][3], const EigenMatrix3& U, const EigenVector3& SIGMA, const EigenMatrix3& V)
 {
 	// TODO
@@ -314,9 +356,9 @@ void TetConstraint::getDeformationGradient(EigenMatrix3& F, const VectorX& x)
 	x4 = x.block_vector(m_p[3]);
 
 	EigenMatrix3 Ds;
-	Ds(0,0) = x1.x() - x4.x();	Ds(0,0) = x2.x() - x4.x();	Ds(0,0) = x3.x() - x4.x();
-	Ds(0,0) = x1.y() - x4.y();	Ds(0,0) = x2.y() - x4.y();	Ds(0,0) = x3.y() - x4.y();
-	Ds(0,0) = x1.z() - x4.z();	Ds(0,0) = x2.z() - x4.z();	Ds(0,0) = x3.z() - x4.z();
+	Ds(0,0) = x1.x() - x4.x();	Ds(0,1) = x2.x() - x4.x();	Ds(0,2) = x3.x() - x4.x();
+	Ds(1,0) = x1.y() - x4.y();	Ds(1,1) = x2.y() - x4.y();	Ds(1,2) = x3.y() - x4.y();
+	Ds(2,0) = x1.z() - x4.z();	Ds(2,1) = x2.z() - x4.z();	Ds(2,2) = x3.z() - x4.z();
 
 	F = m_Dr_inv;
 	Ds.applyThisOnTheLeft(F);

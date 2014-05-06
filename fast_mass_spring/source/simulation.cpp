@@ -147,6 +147,7 @@ void Simulation::Reset()
 	CreateRHSMatrix();
 	p_attach.resize(3);
 	p_spring.resize(6);
+	p_tet.resize(12);
 	SetReprefactorFlag();
 
 	for (int i = 0; i < m_mesh->m_vertices_number; i++)
@@ -407,8 +408,24 @@ void Simulation::Update()
 
 								else if (constraintType == TET) // is tetrahedral constraint
 								{
-									tc = (TetConstraint *) c_j;
-									//TODO: all of this
+									tc = ( TetConstraint* )c_j;
+
+									VectorX tet_verts_old;
+									tet_verts_old.resize( 12 );
+									tet_verts_old.block_vector( 0 ) = q_n1.block_vector(tc->GetConstrainedVertexIndex1());
+									tet_verts_old.block_vector( 1 ) = q_n1.block_vector(tc->GetConstrainedVertexIndex2());
+									tet_verts_old.block_vector( 2 ) = q_n1.block_vector(tc->GetConstrainedVertexIndex3());
+									tet_verts_old.block_vector( 3 ) = q_n1.block_vector(tc->GetConstrainedVertexIndex4());
+
+									VectorX tet_verts_new;
+									tet_verts_new.resize( 12 );
+									tc->computeVolumePreservingVertexPositions( tet_verts_new, tet_verts_old );
+
+									p_j = &p_tet;
+									p_j->block_vector( 0 ) = tet_verts_new.block_vector( 0 );
+									p_j->block_vector( 1 ) = tet_verts_new.block_vector( 1 );
+									p_j->block_vector( 2 ) = tet_verts_new.block_vector( 2 );
+									p_j->block_vector( 3 ) = tet_verts_new.block_vector( 3 );
 								}
 
 								c_j->m_RHS.applyThisOnTheLeft(*p_j);

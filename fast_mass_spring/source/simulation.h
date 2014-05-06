@@ -163,6 +163,7 @@ protected:
 
 	VectorX p_attach;
 	VectorX p_spring;
+	VectorX p_tet;
 
 private:
 

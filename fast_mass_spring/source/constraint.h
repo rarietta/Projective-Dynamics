@@ -142,6 +142,13 @@ public:
 	virtual void  EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTriplet>& hessian_triplets);
 	//SparseMatrix m_RHS;
 
+	virtual void computeVolumePreservingVertexPositions( VectorX& after_verts, const VectorX& before_verts );
+	inline unsigned int GetConstrainedVertexIndex1( void ) { return m_p[0]; }
+	inline unsigned int GetConstrainedVertexIndex2( void ) { return m_p[1]; }
+	inline unsigned int GetConstrainedVertexIndex3( void ) { return m_p[2]; }
+	inline unsigned int GetConstrainedVertexIndex4( void ) { return m_p[3]; }
+	double clamp( double n, double lower, double upper );
+
 private:
 	void getDeformationGradient(EigenMatrix3& F, const VectorX& x);
 	void getStressTensor(EigenMatrix3& P, const EigenMatrix3& F, const EigenMatrix3& R);
