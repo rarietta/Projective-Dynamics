@@ -302,6 +302,9 @@ void TetConstraint::EvaluateHessian(const VectorX& x, std::vector<SparseMatrixTr
 // strain limiting volume preservation
 void TetConstraint::computeVolumePreservingVertexPositions( VectorX& new_vertex_positions, const VectorX& current_vertex_positions )
 {
+	// debug
+	bool tet_did_collide = false;
+
 	// compute the deformation gradient, F, for the tetrahedron's current deformation
 	EigenMatrix3 F;
 	getDeformationGradient( F, current_vertex_positions );
@@ -311,13 +314,66 @@ void TetConstraint::computeVolumePreservingVertexPositions( VectorX& new_vertex_
 	EigenVector3 SIGMA;
 	singularValueDecomp( U, SIGMA, V, F );
 
+	// TODO: maybe check for a negative determinant for F after we clamp the SIGMA values instead of here
+
+	// compute determinant of F (the deformation gradient)
+	double det_F = F.determinant();
+
+	// prevent inverted tetrahedra
+	if ( det_F < 0.0 ) {
+
+		// debug
+		tet_did_collide = true;
+
+		// negate smallest value of SIGMA; SIGMA is gauranteed to be sorted in decreasing order
+		SIGMA[2] *= -1.0;
+
+		// TODO: the re-sorting below might be unnecessary
+
+		// re-sort SIGMA so the values are in decreasing order
+		double high_val = SIGMA[0];
+		double mid_val = SIGMA[1];
+		double low_val = SIGMA[2];
+
+		// set low_val with certainty
+		// swap mid_val and low_val if mid_val < low_val
+		if ( mid_val < low_val ) {
+			double temp = low_val;
+			low_val = mid_val;
+			mid_val = temp;
+		}
+		// swap high_val and low_val if high_val < low_val
+		if ( high_val < low_val ) {
+			double temp = low_val;
+			low_val = high_val;
+			high_val = temp;
+		}
+
+		// sort mid_val and high_val
+		// we already know low_val
+		if ( high_val < mid_val ) {
+			double temp = mid_val;
+			mid_val = high_val;
+			high_val = temp;
+		}
+
+		SIGMA[0] = high_val;
+		SIGMA[1] = mid_val;
+		SIGMA[2] = low_val;
+	}
+
 	// compute a new S, S*, by clamping the existing s values (stresses) on the main diagonal of S
 	double min = 0.95;
 	double max = 1.05;
 	EigenMatrix3 SIGMA_new;
+
 	SIGMA_new << clamp( SIGMA( 0, 0 ), min, max ),	0.0,								0.0,
 				 0.0,								clamp( SIGMA( 1, 0 ), min, max ),	0.0,
 				 0.0,								0.0,								clamp( SIGMA( 2, 0 ), min, max );
+
+	// TODO: maybe check for a negative determinant for F here instead of before we clamp the SIGMA values
+
+	// TODO: maybe invert the last column of U to ensure the determinant of F_new is positive b/c I saw that in a paper
 
 	// compute a new deformation gradient, F*, using the existing U and V rotation matrices along with S*
 	EigenMatrix3 F_new = V.transpose();
@@ -334,6 +390,21 @@ void TetConstraint::computeVolumePreservingVertexPositions( VectorX& new_vertex_
 	new_vertex_positions.block_vector( 0 ) = new_vertex_positions.block_vector( 3 ) + deformed_basis.col( 0 );
 	new_vertex_positions.block_vector( 1 ) = new_vertex_positions.block_vector( 3 ) + deformed_basis.col( 1 );
 	new_vertex_positions.block_vector( 2 ) = new_vertex_positions.block_vector( 3 ) + deformed_basis.col( 2 );
+
+	// debug
+	//if ( tet_did_collide ) {
+	//	std::cout << "\n" << std::endl;
+	//	std::cout << "current[0] = ( " << current_vertex_positions.block_vector( 0 )[0] << ", " << current_vertex_positions.block_vector( 0 )[1] << ", " << current_vertex_positions.block_vector( 0 )[2] << " )" << std::endl;
+	//	std::cout << "current[1] = ( " << current_vertex_positions.block_vector( 1 )[0] << ", " << current_vertex_positions.block_vector( 1 )[1] << ", " << current_vertex_positions.block_vector( 1 )[2] << " )" << std::endl;
+	//	std::cout << "current[2] = ( " << current_vertex_positions.block_vector( 2 )[0] << ", " << current_vertex_positions.block_vector( 2 )[1] << ", " << current_vertex_positions.block_vector( 2 )[2] << " )" << std::endl;
+	//	std::cout << "current[3] = ( " << current_vertex_positions.block_vector( 3 )[0] << ", " << current_vertex_positions.block_vector( 3 )[1] << ", " << current_vertex_positions.block_vector( 3 )[2] << " )" << std::endl;
+
+	//	std::cout << "\n" << std::endl;
+	//	std::cout << "new[0] = ( " << new_vertex_positions.block_vector( 0 )[0] << ", " << new_vertex_positions.block_vector( 0 )[1] << ", " << new_vertex_positions.block_vector( 0 )[2] << " )" << std::endl;
+	//	std::cout << "new[1] = ( " << new_vertex_positions.block_vector( 1 )[0] << ", " << new_vertex_positions.block_vector( 1 )[1] << ", " << new_vertex_positions.block_vector( 1 )[2] << " )" << std::endl;
+	//	std::cout << "new[2] = ( " << new_vertex_positions.block_vector( 2 )[0] << ", " << new_vertex_positions.block_vector( 2 )[1] << ", " << new_vertex_positions.block_vector( 2 )[2] << " )" << std::endl;
+	//	std::cout << "new[3] = ( " << new_vertex_positions.block_vector( 3 )[0] << ", " << new_vertex_positions.block_vector( 3 )[1] << ", " << new_vertex_positions.block_vector( 3 )[2] << " )" << std::endl;
+	//}
 }
 
 double TetConstraint::clamp( double n, double lower, double upper )
