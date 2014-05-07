@@ -314,13 +314,13 @@ void TetConstraint::computeVolumePreservingVertexPositions( VectorX& new_vertex_
 	EigenVector3 SIGMA;
 	singularValueDecomp( U, SIGMA, V, F );
 
-	// TODO: maybe check for a negative determinant for F after we clamp the SIGMA values instead of here
-
 	// compute determinant of F (the deformation gradient)
 	double det_F = F.determinant();
 
 	// prevent inverted tetrahedra
 	if ( det_F < 0.0 ) {
+
+		// TODO: maybe check for a negative determinant for F after we clamp the SIGMA values instead of here
 
 		// debug
 		tet_did_collide = true;
@@ -434,6 +434,9 @@ void TetConstraint::getDeformationGradient(EigenMatrix3& F, const VectorX& x)
 	Ds(0,0) = x1.x() - x4.x();	Ds(0,1) = x2.x() - x4.x();	Ds(0,2) = x3.x() - x4.x();
 	Ds(1,0) = x1.y() - x4.y();	Ds(1,1) = x2.y() - x4.y();	Ds(1,2) = x3.y() - x4.y();
 	Ds(2,0) = x1.z() - x4.z();	Ds(2,1) = x2.z() - x4.z();	Ds(2,2) = x3.z() - x4.z();
+	//Ds(0,0) = x1.x() - x4.x();	Ds(1,0) = x2.x() - x4.x();	Ds(2,0) = x3.x() - x4.x();
+	//Ds(0,1) = x1.y() - x4.y();	Ds(1,1) = x2.y() - x4.y();	Ds(2,1) = x3.y() - x4.y();
+	//Ds(0,2) = x1.z() - x4.z();	Ds(1,2) = x2.z() - x4.z();	Ds(2,2) = x3.z() - x4.z();
 
 	F = m_Dr_inv;
 	Ds.applyThisOnTheLeft(F);

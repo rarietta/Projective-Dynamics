@@ -41,7 +41,7 @@ TimerWrapper g_integration_timer;
 Simulation::Simulation()
 {
 	////////////////////////////////////////////////////
-	// setup A matricex for attachment constraint
+	// setup A matrix for attachment constraint
 	////////////////////////////////////////////////////
 
 	std::vector<SparseMatrixTriplet> att_triplets;
@@ -83,6 +83,7 @@ Simulation::Simulation()
 
 	m_A_spring.resize(6,6);
 	m_A_spring.setFromTriplets( spr_triplets.begin(), spr_triplets.end() );
+
 
 	////////////////////////////////////////////////////
 	// setup A matrix for tet constraint
@@ -222,6 +223,22 @@ SparseMatrix Simulation::CreateSMatrix(Constraint* c)
 	{
 		//TODO: all of this
 		s_triplets.clear();
+		unsigned int m_p1 = tc->GetConstrainedVertexIndex1();
+		s_triplets.push_back(SparseMatrixTriplet(0, m_p1*3 + 0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(1, m_p1*3 + 1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(2, m_p1*3 + 2, 1));
+		unsigned int m_p2 = tc->GetConstrainedVertexIndex2();
+		s_triplets.push_back(SparseMatrixTriplet(3, m_p2*3 + 0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(4, m_p2*3 + 1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(5, m_p2*3 + 2, 1));
+		unsigned int m_p3 = tc->GetConstrainedVertexIndex3();
+		s_triplets.push_back(SparseMatrixTriplet(6, m_p3*3 + 0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(7, m_p3*3 + 1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(8, m_p3*3 + 2, 1));
+		unsigned int m_p4 = tc->GetConstrainedVertexIndex4();
+		s_triplets.push_back(SparseMatrixTriplet(9, m_p4*3 + 0, 1));
+		s_triplets.push_back(SparseMatrixTriplet(10, m_p4*3 + 1, 1));
+		s_triplets.push_back(SparseMatrixTriplet(11, m_p4*3 + 2, 1));
 		S.resize(12,m_mesh->m_vertices_number*3);
 	}
 
